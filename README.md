@@ -43,6 +43,23 @@ Credenciais e Configuração Padrão (dev)
   - Senha: `senha`
   - Ajustável em `docker-compose.yml` (`ADMIN_EMAIL`, `ADMIN_PASSWORD`, `JWT_SECRET`).
 
+### Resetar o banco de dados
+
+Use o script abaixo para recriar o banco do zero, aplicar as migrações e executar o seed padrão.
+
+- Comando: `npm run db:reset`
+- O que faz:
+  - `docker compose down -v` (remove containers e volume do Postgres)
+  - `docker compose up -d` (sobe db, backend e web)
+  - Aguarda Postgres em `localhost:55432`
+  - `prisma migrate deploy` e `prisma db seed`
+
+Credenciais de acesso pós-seed:
+- Admin: `admin@local` / `senha`
+- Diretor: `diretor@local` / `secret`
+- Professor: `professor@local` / `secret`
+- Aluno: `aluno@local` / `secret`
+
 **Inicialização Local (Sem Docker)**
 - Backend:
   - `cp apps/backend/.env.example apps/backend/.env`

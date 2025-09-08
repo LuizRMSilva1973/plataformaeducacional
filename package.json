@@ -15,6 +15,7 @@
     "db:migrate": "npm -w @edu/backend run prisma:migrate",
     "db:deploy": "npm -w @edu/backend run prisma:deploy",
     "db:seed": "npm -w @edu/backend run prisma:seed",
+    "db:reset": "bash scripts/db-reset.sh",
     "dev:compose": "docker compose up -d",
     "dev:compose:down": "docker compose down"
   },
