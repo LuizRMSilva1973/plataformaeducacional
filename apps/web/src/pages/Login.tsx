@@ -1,7 +1,11 @@
 import React from 'react';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
+import { useNavigate } from 'react-router-dom';
 
 export function Login() {
+  const { setToken } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = React.useState('admin@local');
   const [password, setPassword] = React.useState('senha');
   const [result, setResult] = React.useState<string>('');
@@ -13,7 +17,9 @@ export function Login() {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
-      setResult(`Token: ${data.token.slice(0, 16)}...`);
+      setToken(data.token);
+      setResult('Login realizado');
+      navigate('/');
     } catch (err: any) {
       setResult(`Erro: ${err?.message || 'login falhou'}`);
     }
