@@ -35,6 +35,12 @@ model User {
   updatedAt DateTime      @updatedAt
   memberships Membership[]
   submissions Submission[]
+  enrollments Enrollment[]
+  grades     Grade[]
+  attendances Attendance[]
+  teachingAssignments TeachingAssignment[]
+  files      StoredFile[] @relation("UserFiles")
+  auditLogs  AuditLog[]   @relation("UserAuditLogs")
   messagesSent Message[]  @relation("messagesSent")
   messagesRecv Message[]  @relation("messagesRecv")
 }
@@ -47,6 +53,15 @@ model School {
   memberships Membership[]
   classes   Class[]
   subjects  Subject[]
+  teachingAssignments TeachingAssignment[]
+  enrollments Enrollment[]
+  assignments Assignment[]
+  grades     Grade[]
+  attendances Attendance[]
+  announcements Announcement[]
+  messages   Message[]
+  files      StoredFile[]
+  auditLogs  AuditLog[]
 }
 
 model Membership {
@@ -71,6 +86,11 @@ model Class {
   year      Int
   enrollments Enrollment[]
   assignments Assignment[]
+  teachingAssignments TeachingAssignment[]
+  grades     Grade[]
+  attendances Attendance[]
+  announcements Announcement[]
+  messages   Message[]
   @@index([schoolId])
 }
 
@@ -79,6 +99,9 @@ model Subject {
   school    School   @relation(fields: [schoolId], references: [id])
   schoolId  String
   name      String
+  teachingAssignments TeachingAssignment[]
+  assignments Assignment[]
+  grades     Grade[]
   @@index([schoolId])
 }
 
@@ -119,6 +142,7 @@ model Assignment {
   title     String
   dueAt     DateTime?
   submissions Submission[]
+  grades     Grade[]
   @@index([schoolId])
 }
 
@@ -143,7 +167,7 @@ model Grade {
   classId   String
   subject   Subject  @relation(fields: [subjectId], references: [id])
   subjectId String
-  assignment Assignment?
+  assignment Assignment? @relation(fields: [assignmentId], references: [id])
   assignmentId String?
   value     Float
   gradedAt  DateTime @default(now())
@@ -195,7 +219,7 @@ model StoredFile {
   id        String   @id @default(cuid())
   school    School   @relation(fields: [schoolId], references: [id])
   schoolId  String
-  owner     User?    @relation(fields: [ownerUserId], references: [id])
+  owner     User?    @relation("UserFiles", fields: [ownerUserId], references: [id])
   ownerUserId String?
   path      String
   mimeType  String
@@ -207,7 +231,7 @@ model AuditLog {
   id        String   @id @default(cuid())
   school    School?  @relation(fields: [schoolId], references: [id])
   schoolId  String?
-  actor     User?    @relation(fields: [actorUserId], references: [id])
+  actor     User?    @relation("UserAuditLogs", fields: [actorUserId], references: [id])
   actorUserId String?
   action    String
   entity    String
