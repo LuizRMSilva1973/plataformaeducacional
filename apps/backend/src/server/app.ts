@@ -5,10 +5,14 @@ import { router as authRouter } from '../modules/auth/index.js';
 import { router as scopedRouter } from '../server/scoped.js';
 import { prisma } from '../lib/prisma.js';
 import { errorHandler } from './errors.js';
+import { requestId } from '../middleware/requestId.js';
+import { requestLogger } from '../middleware/logger.js';
 import { ensureAuthenticated } from '../middleware/auth.js';
 
 export function createServer() {
   const app = express();
+  app.use(requestId);
+  app.use(requestLogger);
   const corsOrigin = process.env.CORS_ORIGIN || '*';
   // Allow all in dev by default, or restrict to configured origin(s)
   if (corsOrigin === '*') {

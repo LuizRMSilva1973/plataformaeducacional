@@ -6,9 +6,9 @@ declare global {
       schoolId?: string;
       user?: Pick<User, 'id' | 'email' | 'name' | 'isAdmin'>;
       tokenSub?: string;
+      requestId?: string;
     }
   }
 }
 
 export {};
-
