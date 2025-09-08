@@ -7,8 +7,9 @@ import { rateLimit } from '../../middleware/rateLimit.js';
 
 export const router = Router();
 
-// Em dev, a senha padrão do seed é "senha" (5 chars), então aceitamos min(5)
-const loginSchema = z.object({ email: z.string().email(), password: z.string().min(5) });
+// Para reduzir 400 indevidos, validamos de forma permissiva (trim)
+const emailSchema = z.string().trim().min(3);
+const loginSchema = z.object({ email: emailSchema, password: z.string().trim().min(1) });
 
 router.post('/login', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
@@ -29,7 +30,7 @@ router.post('/refresh', (_req, res) => {
 });
 
 // Simple dev route to create first admin user (protect/remove in prod)
-const registerSchema = z.object({ name: z.string().min(2), email: z.string().email(), password: z.string().min(5), isAdmin: z.boolean().optional() });
+const registerSchema = z.object({ name: z.string().min(2), email: emailSchema, password: z.string().min(5), isAdmin: z.boolean().optional() });
 router.post('/dev-register', rateLimit({ windowMs: 60_000, max: 5 }), async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });

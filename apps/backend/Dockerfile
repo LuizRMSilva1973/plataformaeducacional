@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:20
 WORKDIR /workspace
 
 # Install dependencies (monorepo-aware)
@@ -6,7 +6,7 @@ COPY package.json package-lock.json ./
 COPY apps/backend/package.json apps/backend/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY packages/ui/package.json packages/ui/package.json
-RUN npm ci
+RUN npm ci || npm install
 
 # Copy source
 COPY . .

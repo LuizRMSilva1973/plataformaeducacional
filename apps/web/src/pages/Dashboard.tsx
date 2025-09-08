@@ -58,75 +58,24 @@ export function Dashboard() {
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <header style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ margin: 0 }}>Painel</h1>
-        <span style={{ color: '#666' }}>API: {API_URL} — Health: {health}</span>
-        <span style={{ flex: 1 }} />
-        {!token ? (
-          <Link to="/login">Login</Link>
-        ) : (
-          <button onClick={logout}>Sair</button>
-        )}
-      </header>
-
-      <div style={{ marginBottom: 16 }}>
-        <label>Escola: </label>
-        <select value={schoolId} onChange={(e) => onChangeSchool(e.target.value)}>
-          {schools.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-          {!schools.find(s => s.id === 'seed-school') && <option value="seed-school">Seed School</option>}
-        </select>
-      </div>
-
-      {!token && (
-        <p>Você não está autenticado. <Link to="/login">Faça login</Link>.</p>
-      )}
-
-      {token && schoolId && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-          <section>
-            <h3>Usuários</h3>
-            <ul>
-              {users.map((u) => (
-                <li key={u.user.id}>{u.user.name} &lt;{u.user.email}&gt; — {u.role}</li>
-              ))}
-            </ul>
-          </section>
-          <section>
-            <h3>Tarefas</h3>
-            <CreateAssignment
-              schoolId={schoolId}
-              classes={classes}
-              subjects={subjects}
-              onCreated={(newItem) => { setAssignments([newItem, ...assignments]); setMsg('Tarefa criada'); }}
-              onError={(e) => setMsg(e?.message || 'Erro ao criar tarefa')}
-            />
-            <ul>
-              {assignments.map((a) => (
-                <li key={a.id}>{a.title} {a.dueAt ? `(até ${new Date(a.dueAt).toLocaleDateString()})` : ''}</li>
-              ))}
-            </ul>
-          </section>
-          <section>
-            <h3>Avisos</h3>
-            <CreateAnnouncement
-              schoolId={schoolId}
-              classes={classes}
-              onCreated={(newItem) => { setAnnouncements([newItem, ...announcements]); setMsg('Aviso criado'); }}
-              onError={(e) => setMsg(e?.message || 'Erro ao criar aviso')}
-            />
-            <ul>
-              {announcements.map((an) => (
-                <li key={an.id}><strong>{an.title}</strong></li>
-              ))}
-            </ul>
-          </section>
+    <div className="grid">
+      <section className="card">
+        <h3>Status</h3>
+        <div className="muted">API: {API_URL} — Health: {health}</div>
+      </section>
+      <section className="card">
+        <h3>Resumo</h3>
+        <div className="muted">Escola: {schoolId || '—'}</div>
+        <div className="muted">Usuários: {users.length} • Tarefas: {assignments.length} • Avisos: {announcements.length}</div>
+      </section>
+      <section className="card">
+        <h3>Ações rápidas</h3>
+        <div className="row">
+          <Link className="button" to="/assignments">Ver tarefas</Link>
+          <Link className="button" to="/announcements">Ver avisos</Link>
+          <Link className="button" to="/users">Ver usuários</Link>
         </div>
-      )}
-
-      {msg && <p style={{ marginTop: 12, color: '#0a7' }}>{msg}</p>}
+      </section>
     </div>
   );
 }
