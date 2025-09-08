@@ -13,6 +13,9 @@ export function Dashboard() {
   const [users, setUsers] = React.useState<any[]>([]);
   const [assignments, setAssignments] = React.useState<any[]>([]);
   const [announcements, setAnnouncements] = React.useState<any[]>([]);
+  const [classes, setClasses] = React.useState<any[]>([]);
+  const [subjects, setSubjects] = React.useState<any[]>([]);
+  const [msg, setMsg] = React.useState<string>("");
 
   React.useEffect(() => {
     api<{ ok: boolean }>('/health')
@@ -38,12 +41,14 @@ export function Dashboard() {
     if (!token || !schoolId) return;
     (async () => {
       try {
-        const [u, a, an] = await Promise.all([
+        const [u, a, an, cls, sub] = await Promise.all([
           api<{ items: any[] }>(`/${schoolId}/users?page=1&limit=10`),
           api<{ items: any[] }>(`/${schoolId}/assignments?page=1&limit=10`),
           api<{ items: any[] }>(`/${schoolId}/communications/announcements?page=1&limit=10`),
+          api<{ items: any[] }>(`/${schoolId}/classes?page=1&limit=50`),
+          api<{ items: any[] }>(`/${schoolId}/subjects?page=1&limit=50`),
         ]);
-        setUsers(u.items); setAssignments(a.items); setAnnouncements(an.items);
+        setUsers(u.items); setAssignments(a.items); setAnnouncements(an.items); setClasses(cls.items); setSubjects(sub.items);
       } catch {}
     })();
   }, [token, schoolId]);
@@ -91,6 +96,13 @@ export function Dashboard() {
           </section>
           <section>
             <h3>Tarefas</h3>
+            <CreateAssignment
+              schoolId={schoolId}
+              classes={classes}
+              subjects={subjects}
+              onCreated={(newItem) => { setAssignments([newItem, ...assignments]); setMsg('Tarefa criada'); }}
+              onError={(e) => setMsg(e?.message || 'Erro ao criar tarefa')}
+            />
             <ul>
               {assignments.map((a) => (
                 <li key={a.id}>{a.title} {a.dueAt ? `(até ${new Date(a.dueAt).toLocaleDateString()})` : ''}</li>
@@ -99,6 +111,12 @@ export function Dashboard() {
           </section>
           <section>
             <h3>Avisos</h3>
+            <CreateAnnouncement
+              schoolId={schoolId}
+              classes={classes}
+              onCreated={(newItem) => { setAnnouncements([newItem, ...announcements]); setMsg('Aviso criado'); }}
+              onError={(e) => setMsg(e?.message || 'Erro ao criar aviso')}
+            />
             <ul>
               {announcements.map((an) => (
                 <li key={an.id}><strong>{an.title}</strong></li>
@@ -107,6 +125,72 @@ export function Dashboard() {
           </section>
         </div>
       )}
+
+      {msg && <p style={{ marginTop: 12, color: '#0a7' }}>{msg}</p>}
     </div>
+  );
+}
+
+function CreateAnnouncement({ schoolId, classes, onCreated, onError }: { schoolId: string, classes: any[], onCreated: (item: any) => void, onError: (e: any) => void }) {
+  const [title, setTitle] = React.useState('');
+  const [content, setContent] = React.useState('');
+  const [classId, setClassId] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const item = await api<any>(`/${schoolId}/communications/announcements`, {
+        method: 'POST',
+        body: JSON.stringify({ title, content, classId: classId || undefined })
+      });
+      setTitle(''); setContent(''); setClassId('');
+      onCreated(item);
+    } catch (e: any) { onError(e); } finally { setBusy(false); }
+  }
+  return (
+    <form onSubmit={submit} style={{ marginBottom: 12, display: 'grid', gap: 8 }}>
+      <input placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} required />
+      <textarea placeholder="Conteúdo" value={content} onChange={(e) => setContent(e.target.value)} required />
+      <select value={classId} onChange={(e) => setClassId(e.target.value)}>
+        <option value="">(Opcional) Turma</option>
+        {classes.map((c:any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+      </select>
+      <button type="submit" disabled={busy}>Criar aviso</button>
+    </form>
+  );
+}
+
+function CreateAssignment({ schoolId, classes, subjects, onCreated, onError }: { schoolId: string, classes: any[], subjects: any[], onCreated: (item: any) => void, onError: (e: any) => void }) {
+  const [title, setTitle] = React.useState('');
+  const [classId, setClassId] = React.useState('');
+  const [subjectId, setSubjectId] = React.useState('');
+  const [dueAt, setDueAt] = React.useState<string>('');
+  const [busy, setBusy] = React.useState(false);
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const body: any = { title, classId, subjectId };
+      if (dueAt) body.dueAt = new Date(dueAt).toISOString();
+      const item = await api<any>(`/${schoolId}/assignments`, { method: 'POST', body: JSON.stringify(body) });
+      setTitle(''); setClassId(''); setSubjectId(''); setDueAt('');
+      onCreated(item);
+    } catch (e: any) { onError(e); } finally { setBusy(false); }
+  }
+  return (
+    <form onSubmit={submit} style={{ marginBottom: 12, display: 'grid', gap: 8 }}>
+      <input placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} required />
+      <select value={classId} onChange={(e) => setClassId(e.target.value)} required>
+        <option value="">Selecione a turma</option>
+        {classes.map((c:any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+      </select>
+      <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)} required>
+        <option value="">Selecione a disciplina</option>
+        {subjects.map((s:any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+      </select>
+      <input type="date" value={dueAt} onChange={(e) => setDueAt(e.target.value)} />
+      <button type="submit" disabled={busy}>Criar tarefa</button>
+    </form>
   );
 }
