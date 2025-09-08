@@ -1,0 +1,187 @@
+### Autenticação (criar usuário admin/dev)
+POST http://localhost:3000/auth/dev-register
+Content-Type: application/json
+
+{
+  "name": "Admin",
+  "email": "admin@local",
+  "password": "secret",
+  "isAdmin": true
+}
+
+### Login
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@local",
+  "password": "secret"
+}
+
+### Criar escola (admin)
+POST http://localhost:3000/admin/schools
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Escola Central"
+}
+
+### Obter dados da escola
+GET http://localhost:3000/seed-school/schools
+Authorization: Bearer {{token}}
+
+### Listar usuários da escola (membros)
+GET http://localhost:3000/seed-school/users
+Authorization: Bearer {{token}}
+
+### Listar memberships (diretor)
+GET http://localhost:3000/seed-school/members
+Authorization: Bearer {{token}}
+
+### Criar turma (diretor)
+POST http://localhost:3000/seed-school/classes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "1A",
+  "year": 2025
+}
+
+### Listar turmas (paginado + filtros)
+GET http://localhost:3000/seed-school/classes?page=1&limit=20&q=1A&year=2025&sort=name&order=asc
+Authorization: Bearer {{token}}
+
+### Criar disciplina (diretor)
+POST http://localhost:3000/seed-school/subjects
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Matemática"
+}
+
+### Listar disciplinas (paginado + busca)
+GET http://localhost:3000/seed-school/subjects?page=1&limit=20&q=mate&order=asc
+Authorization: Bearer {{token}}
+
+### Atribuir professor a turma/disciplina (diretor)
+POST http://localhost:3000/seed-school/teaching-assignments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "teacherUserId": "{{teacherUserId}}",
+  "classId": "{{classId}}",
+  "subjectId": "{{subjectId}}"
+}
+
+### Listar atribuições de docência (paginado + filtros)
+GET http://localhost:3000/seed-school/teaching-assignments?page=1&limit=20&teacherUserId={{teacherUserId}}&classId={{classId}}&subjectId={{subjectId}}
+Authorization: Bearer {{token}}
+
+### Matricular aluno em turma (diretor)
+POST http://localhost:3000/seed-school/enrollments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "studentUserId": "{{studentUserId}}",
+  "classId": "{{classId}}"
+}
+
+### Listar matrículas (paginado + filtros)
+GET http://localhost:3000/seed-school/enrollments?page=1&limit=20&classId={{classId}}&studentUserId={{studentUserId}}
+Authorization: Bearer {{token}}
+
+### Criar tarefa (professor)
+POST http://localhost:3000/seed-school/assignments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "classId": "{{classId}}",
+  "subjectId": "{{subjectId}}",
+  "title": "Trabalho 2 — Decimais",
+  "dueAt": "2025-12-01T23:59:00.000Z"
+}
+
+### Listar tarefas (paginado + filtros)
+GET http://localhost:3000/seed-school/assignments?page=1&limit=20&classId={{classId}}&subjectId={{subjectId}}&q=Trabalho&sort=dueAt&order=asc
+Authorization: Bearer {{token}}
+
+### Enviar entrega (aluno)
+POST http://localhost:3000/seed-school/submissions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "assignmentId": "{{assignmentId}}"
+}
+
+### Listar entregas (paginado + filtros)
+GET http://localhost:3000/seed-school/submissions?page=1&limit=20&assignmentId={{assignmentId}}&studentUserId={{studentUserId}}&order=desc
+Authorization: Bearer {{token}}
+
+### Lançar nota (professor)
+POST http://localhost:3000/seed-school/grades
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "studentUserId": "{{studentUserId}}",
+  "classId": "{{classId}}",
+  "subjectId": "{{subjectId}}",
+  "assignmentId": "{{assignmentId}}",
+  "value": 9.5
+}
+
+### Listar notas (paginado + filtros)
+GET http://localhost:3000/seed-school/grades?page=1&limit=20&studentUserId={{studentUserId}}&classId={{classId}}&subjectId={{subjectId}}&order=desc
+Authorization: Bearer {{token}}
+
+### Registrar presença (professor)
+POST http://localhost:3000/seed-school/attendance
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "classId": "{{classId}}",
+  "studentUserId": "{{studentUserId}}",
+  "date": "2025-09-01",
+  "status": "PRESENT"
+}
+
+### Listar presenças (paginado + filtros)
+GET http://localhost:3000/seed-school/attendance?page=1&limit=20&classId={{classId}}&studentUserId={{studentUserId}}&dateFrom=2025-01-01&dateTo=2025-12-31&status=PRESENT&order=desc
+Authorization: Bearer {{token}}
+
+### Criar comunicado (diretor)
+POST http://localhost:3000/seed-school/communications/announcements
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Reunião de Pais",
+  "content": "Reunião na próxima terça, 19h.",
+  "classId": "{{classId}}"
+}
+
+### Listar comunicados (paginado + busca)
+GET http://localhost:3000/seed-school/communications/announcements?page=1&limit=20&q=Reuni%C3%A3o&classId={{classId}}&order=desc
+Authorization: Bearer {{token}}
+
+### Enviar mensagem (qualquer membro da escola)
+POST http://localhost:3000/seed-school/communications/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "content": "Olá turma!",
+  "classId": "{{classId}}"
+}
+
+### Listar mensagens (paginado + filtros)
+GET http://localhost:3000/seed-school/communications/messages?page=1&limit=20&q=ol%C3%A1&fromUserId={{teacherUserId}}&classId={{classId}}&order=desc
+Authorization: Bearer {{token}}

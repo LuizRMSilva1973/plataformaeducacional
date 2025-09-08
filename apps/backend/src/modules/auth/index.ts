@@ -1,0 +1,42 @@
+import { Router } from 'express';
+import { prisma } from '../../lib/prisma.js';
+import { z } from 'zod';
+import bcrypt from 'bcryptjs';
+import { signAccessToken } from '../../lib/jwt.js';
+
+export const router = Router();
+
+const loginSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
+
+router.post('/login', async (req, res) => {
+  const parsed = loginSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+
+  const { email, password } = parsed.data;
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+  const ok = await bcrypt.compare(password, user.passwordHash);
+  if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const token = signAccessToken({ sub: user.id, email: user.email, name: user.name, isAdmin: user.isAdmin });
+  return res.json({ token });
+});
+
+router.post('/refresh', (_req, res) => {
+  res.json({ token: 'dev-token' });
+});
+
+// Simple dev route to create first admin user (protect/remove in prod)
+const registerSchema = z.object({ name: z.string().min(2), email: z.string().email(), password: z.string().min(6), isAdmin: z.boolean().optional() });
+router.post('/dev-register', async (req, res) => {
+  const parsed = registerSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const { name, email, password, isAdmin } = parsed.data;
+  const hash = await bcrypt.hash(password, 10);
+  try {
+    const user = await prisma.user.create({ data: { name, email, passwordHash: hash, isAdmin: !!isAdmin } });
+    return res.status(201).json({ id: user.id, email: user.email, isAdmin: user.isAdmin });
+  } catch {
+    return res.status(409).json({ error: 'User already exists?' });
+  }
+});

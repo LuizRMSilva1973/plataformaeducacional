@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  lint-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck all packages
+        run: npm run typecheck
+
+  backend-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ci_db
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci_db?schema=public
+      JWT_SECRET: test-secret
+      ADMIN_EMAIL: admin@ci.local
+      ADMIN_PASSWORD: senha
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm install
+
+      - name: Generate Prisma client
+        working-directory: apps/backend
+        run: npx prisma generate
+
+      - name: Sync DB schema (Prisma db push)
+        working-directory: apps/backend
+        run: npx prisma db push --accept-data-loss
+
+      - name: Run tests (backend)
+        working-directory: apps/backend
+        run: npm run test

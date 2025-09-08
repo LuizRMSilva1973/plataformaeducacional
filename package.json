@@ -1,0 +1,31 @@
+{
+  "name": "edu-platform",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "eslint apps/backend/src apps/web/src packages/ui/src --ext .ts,.tsx --max-warnings=0",
+    "typecheck": "npm -w @edu/backend run typecheck && npm -w @edu/web run typecheck && npm -w @edu/ui run typecheck",
+    "dev:backend": "npm -w @edu/backend run dev",
+    "dev:web": "npm -w @edu/web run dev",
+    "db:generate": "npm -w @edu/backend run prisma:generate",
+    "db:migrate": "npm -w @edu/backend run prisma:migrate",
+    "db:deploy": "npm -w @edu/backend run prisma:deploy",
+    "db:seed": "npm -w @edu/backend run prisma:seed",
+    "dev:compose": "docker compose up -d",
+    "dev:compose:down": "docker compose down"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.1",
+    "@typescript-eslint/parser": "^8.0.1",
+    "eslint": "^9.8.0",
+    "eslint-plugin-react": "^7.34.3",
+    "eslint-plugin-react-hooks": "^5.2.0"
+  }
+}

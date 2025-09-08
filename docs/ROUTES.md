@@ -1,0 +1,33 @@
+# Rotas — Esboço
+
+- Auth
+  - POST /auth/login
+  - POST /auth/refresh
+- Admin
+  - GET /admin/schools
+- Escopo de escola `/:schoolId`
+  - GET /:schoolId/schools
+  - GET /:schoolId/users?page=1&limit=20
+    - Params: `q`, `role(DIRECTOR|TEACHER|STUDENT)`, `sort(name|email|role)`, `order(asc|desc)`
+  - GET /:schoolId/members?page=1&limit=20
+    - Params: `q`, `role`, `sort(name|email|role)`, `order(asc|desc)`
+  - GET /:schoolId/classes?page=1&limit=20
+    - Params: `q`, `year`, `sort(name|year)`, `order(asc|desc)`
+  - GET /:schoolId/subjects?page=1&limit=20
+    - Params: `q`, `order(asc|desc)`
+  - GET /:schoolId/teaching-assignments?page=1&limit=20
+    - Params: `teacherUserId`, `classId`, `subjectId`, `order(asc|desc)`
+  - GET /:schoolId/enrollments?page=1&limit=20
+    - Params: `studentUserId`, `classId`, `order(asc|desc)`
+  - GET /:schoolId/assignments?page=1&limit=20
+    - Params: `classId`, `subjectId`, `q` (titulo), `sort(dueAt|title)`, `order(asc|desc)`
+  - GET /:schoolId/submissions?page=1&limit=20
+    - Params: `assignmentId`, `studentUserId`, `order(asc|desc)` por `submittedAt`
+  - GET /:schoolId/grades?page=1&limit=20
+    - Params: `studentUserId`, `classId`, `subjectId`, `order(asc|desc)` por `gradedAt`
+  - GET /:schoolId/attendance?page=1&limit=20
+    - Params: `classId`, `studentUserId`, `dateFrom`, `dateTo`, `status(PRESENT|ABSENT|LATE)`, `order(asc|desc)`
+  - GET /:schoolId/communications/announcements?page=1&limit=20
+    - Params: `q` (titulo), `classId`, `order(asc|desc)` por `createdAt`
+  - GET /:schoolId/communications/messages?page=1&limit=20
+    - Params: `q` (conteudo), `fromUserId`, `toUserId`, `classId`, `order(asc|desc)` por `createdAt`

@@ -1,0 +1,32 @@
+{
+  "root": true,
+  "ignorePatterns": ["dist/", "build/", "node_modules/", "coverage/"],
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "parser": "@typescript-eslint/parser",
+      "plugins": ["@typescript-eslint"],
+      "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended"
+      ],
+      "parserOptions": {
+        "ecmaVersion": 2022,
+        "sourceType": "module"
+      }
+    },
+    {
+      "files": ["apps/backend/**/*.ts"],
+      "env": { "node": true }
+    },
+    {
+      "files": ["apps/web/**/*.{ts,tsx}", "packages/ui/**/*.{ts,tsx}"],
+      "env": { "browser": true },
+      "plugins": ["react", "react-hooks"],
+      "extends": ["plugin:react/recommended"],
+      "settings": { "react": { "version": "detect" } },
+      "rules": { "react/react-in-jsx-scope": "off" }
+    }
+  ]
+}
+

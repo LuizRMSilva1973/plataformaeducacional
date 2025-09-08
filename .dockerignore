@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+coverage
+.git
+.turbo
+.pnpm-store
+visual-automata-venv
+**/.env
+**/.DS_Store
+**/migrations
+

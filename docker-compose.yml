@@ -1,0 +1,47 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: edu_platform
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d edu_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    environment:
+      # Ajuste conforme necessidade
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/edu_platform?schema=public
+      JWT_SECRET: dev-secret
+      ADMIN_EMAIL: admin@local
+      ADMIN_PASSWORD: senha
+      PORT: "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      # URL da API usada pelo frontend (acessada pelo browser)
+      VITE_API_URL: http://localhost:3000
+      NODE_OPTIONS: --max-old-space-size=512
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
+volumes:
+  dbdata: {}

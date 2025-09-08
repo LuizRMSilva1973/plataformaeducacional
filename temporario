@@ -1,0 +1,9 @@
+Para concluir o lint localmente, rode estes passos no seu ambiente:
+  
+  - npm install
+  - npm run lint
+  - npm run typecheck
+  
+
+  
+
