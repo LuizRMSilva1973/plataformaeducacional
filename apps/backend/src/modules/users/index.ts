@@ -27,8 +27,8 @@ router.get('/', requireMembership(), async (req, res) => {
     ...(q
       ? {
           OR: [
-            { user: { name: { contains: q, mode: 'insensitive' } } },
-            { user: { email: { contains: q, mode: 'insensitive' } } },
+            { user: { is: { name: { contains: q, mode: 'insensitive' as const } } } },
+            { user: { is: { email: { contains: q, mode: 'insensitive' as const } } } },
           ],
         }
       : {}),
@@ -41,19 +41,14 @@ router.get('/', requireMembership(), async (req, res) => {
     role: 'DIRECTOR' | 'TEACHER' | 'STUDENT';
   };
 
-  const [total, memberships] = await Promise.all<[
-    number,
-    MembershipUserItem[]
-  ]>([
-    prisma.membership.count({ where }),
-    prisma.membership.findMany({
-      where,
-      select: { user: { select: { id: true, email: true, name: true } }, role: true },
-      orderBy,
-      skip: p.skip,
-      take: p.take,
-    }),
-  ]);
+  const total = await prisma.membership.count({ where });
+  const memberships = await prisma.membership.findMany({
+    where,
+    select: { user: { select: { id: true, email: true, name: true } }, role: true },
+    orderBy,
+    skip: p.skip,
+    take: p.take,
+  });
   const items = memberships.map((m) => ({ ...m.user, role: m.role }));
   res.json({ items, meta: buildMeta(total, p) });
 });

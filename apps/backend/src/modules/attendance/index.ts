@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js';
 import { requireMembership } from '../../middleware/auth.js';
 import { parsePagination, buildMeta } from '../../utils/pagination.js';
 import { z } from 'zod';
+import { rateLimit } from '../../middleware/rateLimit.js';
 
 export const router = Router();
 
@@ -36,7 +37,7 @@ router.get('/', requireMembership(), async (req, res) => {
 });
 
 const attSchema = z.object({ classId: z.string(), studentUserId: z.string(), date: z.coerce.date(), status: z.enum(['PRESENT', 'ABSENT', 'LATE']) });
-router.post('/', requireMembership('TEACHER'), async (req, res) => {
+router.post('/', requireMembership('TEACHER'), rateLimit({ windowMs: 60_000, max: 60, keyGenerator: (req:any) => (req.user?.id || req.ip) + req.path }), async (req, res) => {
   const parsed = attSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const attendance = await prisma.attendance.create({ data: { ...parsed.data, schoolId: req.schoolId! } });

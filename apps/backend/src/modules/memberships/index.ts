@@ -25,8 +25,8 @@ router.get('/', requireMembership('DIRECTOR'), async (req, res) => {
     ...(q
       ? {
           OR: [
-            { user: { name: { contains: q, mode: 'insensitive' } } },
-            { user: { email: { contains: q, mode: 'insensitive' } } },
+            { user: { is: { name: { contains: q, mode: 'insensitive' as const } } } },
+            { user: { is: { email: { contains: q, mode: 'insensitive' as const } } } },
           ],
         }
       : {}),

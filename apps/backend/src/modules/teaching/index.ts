@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js';
 import { requireMembership } from '../../middleware/auth.js';
 import { parsePagination, buildMeta } from '../../utils/pagination.js';
 import { z } from 'zod';
+import { rateLimit } from '../../middleware/rateLimit.js';
 
 export const router = Router();
 
@@ -33,7 +34,7 @@ router.get('/', requireMembership(), async (req, res) => {
 });
 
 const assignSchema = z.object({ teacherUserId: z.string(), classId: z.string(), subjectId: z.string() });
-router.post('/', requireMembership('DIRECTOR'), async (req, res) => {
+router.post('/', requireMembership('DIRECTOR'), rateLimit({ windowMs: 60_000, max: 10, keyGenerator: (req:any) => (req.user?.id || req.ip) + req.path }), async (req, res) => {
   const parsed = assignSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const ta = await prisma.teachingAssignment.create({ data: { ...parsed.data, schoolId: req.schoolId! } });

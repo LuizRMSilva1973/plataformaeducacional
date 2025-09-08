@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js';
 import { requireMembership } from '../../middleware/auth.js';
 import { parsePagination, buildMeta } from '../../utils/pagination.js';
 import { z } from 'zod';
+import { rateLimit } from '../../middleware/rateLimit.js';
 
 export const router = Router();
 
@@ -59,7 +60,7 @@ router.get('/messages', requireMembership(), async (req, res) => {
 });
 
 const annSchema = z.object({ title: z.string().min(1), content: z.string().min(1), classId: z.string().optional() });
-router.post('/announcements', requireMembership('DIRECTOR'), async (req, res) => {
+router.post('/announcements', requireMembership('DIRECTOR'), rateLimit({ windowMs: 60_000, max: 10, keyGenerator: (req:any) => (req.user?.id || req.ip) + req.path }), async (req, res) => {
   const parsed = annSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const ann = await prisma.announcement.create({ data: { ...parsed.data, schoolId: req.schoolId! } });
@@ -67,7 +68,7 @@ router.post('/announcements', requireMembership('DIRECTOR'), async (req, res) =>
 });
 
 const msgSchema = z.object({ toUserId: z.string().optional(), classId: z.string().optional(), content: z.string().min(1) });
-router.post('/messages', requireMembership(), async (req, res) => {
+router.post('/messages', requireMembership(), rateLimit({ windowMs: 60_000, max: 60, keyGenerator: (req:any) => (req.user?.id || req.ip) + req.path }), async (req, res) => {
   const parsed = msgSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const msg = await prisma.message.create({ data: { ...parsed.data, fromUserId: req.user!.id, schoolId: req.schoolId! } });
