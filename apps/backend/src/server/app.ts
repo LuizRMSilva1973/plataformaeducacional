@@ -3,6 +3,8 @@ import cors from 'cors';
 import { router as adminRouter } from '../modules/admin/index.js';
 import { router as authRouter } from '../modules/auth/index.js';
 import { router as scopedRouter } from '../server/scoped.js';
+import { prisma } from '../lib/prisma.js';
+import { errorHandler } from './errors.js';
 import { ensureAuthenticated } from '../middleware/auth.js';
 
 export function createServer() {
@@ -25,11 +27,22 @@ export function createServer() {
   }
   app.use(express.json());
 
-  app.get('/health', (_req, res) => res.json({ ok: true }));
+  app.get('/health', async (_req, res) => {
+    try {
+      // Verifica conectividade com o banco
+      await prisma.$executeRaw`SELECT 1`;
+      return res.json({ ok: true, db: 'up' });
+    } catch {
+      return res.status(503).json({ ok: false, db: 'down' });
+    }
+  });
 
   app.use('/auth', authRouter);
   app.use('/admin', ensureAuthenticated, adminRouter);
   app.use('/', ensureAuthenticated, scopedRouter);
+
+  // Middleware global de erros (sempre por último)
+  app.use(errorHandler);
 
   return app;
 }

@@ -3,12 +3,13 @@ import { prisma } from '../../lib/prisma.js';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { signAccessToken } from '../../lib/jwt.js';
+import { rateLimit } from '../../middleware/rateLimit.js';
 
 export const router = Router();
 
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
 
-router.post('/login', async (req, res) => {
+router.post('/login', rateLimit({ windowMs: 60_000, max: 10 }), async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
 
@@ -28,7 +29,7 @@ router.post('/refresh', (_req, res) => {
 
 // Simple dev route to create first admin user (protect/remove in prod)
 const registerSchema = z.object({ name: z.string().min(2), email: z.string().email(), password: z.string().min(6), isAdmin: z.boolean().optional() });
-router.post('/dev-register', async (req, res) => {
+router.post('/dev-register', rateLimit({ windowMs: 60_000, max: 5 }), async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const { name, email, password, isAdmin } = parsed.data;
