@@ -10,6 +10,8 @@ export function Layout() {
   const { token, logout } = useAuth()
   const [schools, setSchools] = React.useState<School[]>([])
   const [schoolId, setSchool] = React.useState(getSchoolId() || '')
+  const [role, setRole] = React.useState<string|undefined>(undefined)
+  const [isAdmin, setIsAdmin] = React.useState<boolean>(false)
   const navigate = useNavigate()
 
   React.useEffect(() => {
@@ -29,6 +31,14 @@ export function Layout() {
     })
   }, [token])
 
+  React.useEffect(() => {
+    if (!token || !schoolId) return
+    api<{ role: string|null, isAdmin: boolean }>(`/${schoolId}/profile/me`).then((r)=>{
+      setRole(r.role || undefined)
+      setIsAdmin(!!r.isAdmin)
+    }).catch(()=>{})
+  }, [token, schoolId])
+
   function changeSchool(id: string) {
     setSchool(id)
     setSchoolId(id)
@@ -45,11 +55,12 @@ export function Layout() {
         <div className="brand">Plataforma Edu</div>
         <nav className="nav">
           <NavLink to="/" end>Dashboard</NavLink>
-          <NavLink to="/users">Usuários</NavLink>
-          <NavLink to="/classes">Turmas</NavLink>
-          <NavLink to="/subjects">Disciplinas</NavLink>
-          <NavLink to="/assignments">Tarefas</NavLink>
-          <NavLink to="/announcements">Avisos</NavLink>
+          {(isAdmin || role === 'DIRECTOR') && <NavLink to="/users">Usuários</NavLink>}
+          {(isAdmin || role === 'DIRECTOR') && <NavLink to="/classes">Turmas</NavLink>}
+          {(isAdmin || role === 'DIRECTOR') && <NavLink to="/subjects">Disciplinas</NavLink>}
+          {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/assignments">Tarefas</NavLink>}
+          {(isAdmin || role === 'DIRECTOR' || role === 'TEACHER' || role === 'STUDENT') && <NavLink to="/announcements">Avisos</NavLink>}
+          {isAdmin && <NavLink to="/admin/schools">Admin: Escolas</NavLink>}
         </nav>
       </aside>
       <main className="content">
@@ -60,6 +71,7 @@ export function Layout() {
             {schools.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
             {!schools.find(s=>s.id==='seed-school') && (<option value="seed-school">Seed School</option>)}
           </select>
+          <span className="muted">{isAdmin ? 'Admin' : (role || '')}</span>
           <div className="spacer"></div>
           <button className="button" onClick={doLogout}>Sair</button>
         </div>
@@ -68,4 +80,3 @@ export function Layout() {
     </div>
   )
 }
-

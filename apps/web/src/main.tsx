@@ -11,6 +11,7 @@ import ClassesPage from './pages/ClassesPage';
 import SubjectsPage from './pages/SubjectsPage';
 import AssignmentsPage from './pages/AssignmentsPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
+import AdminSchoolsPage from './pages/AdminSchoolsPage';
 import './styles.css';
 
 import ErrorPage from './components/ErrorPage';
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
       { path: 'subjects', element: <SubjectsPage /> },
       { path: 'assignments', element: <AssignmentsPage /> },
       { path: 'announcements', element: <AnnouncementsPage /> },
+      { path: 'admin/schools', element: <AdminSchoolsPage /> },
     ],
   },
 ]);
