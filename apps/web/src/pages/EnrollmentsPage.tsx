@@ -42,12 +42,7 @@ export default function EnrollmentsPage() {
     } catch(e:any){ show(e?.message||'Erro ao matricular','error') } finally { setBusy(false) }
   }
 
-  async function remove(id: string) {
-    if (!confirm('Remover matrícula?')) return
-    await api<void>(`/${schoolId}/enrollments/${id}`, { method:'DELETE' })
-    setItems(items.filter(i=>i.id!==id))
-    show('Matrícula removida', 'success')
-  }
+  // Removal moved to item-level component with modal confirm
 
   return (
     <div className="grid" style={{gridTemplateColumns:'1fr'}}>

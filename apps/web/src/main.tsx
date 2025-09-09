@@ -7,6 +7,7 @@ import { AuthProvider } from './lib/auth';
 import { Protected } from './components/Protected';
 import { Layout } from './components/Layout';
 import { ToastProvider } from './components/Toast';
+import { ConfirmProvider } from './components/Confirm';
 import UsersPage from './pages/UsersPage';
 import ClassesPage from './pages/ClassesPage';
 import SubjectsPage from './pages/SubjectsPage';
@@ -47,7 +48,9 @@ createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AuthProvider>
       <ToastProvider>
-        <RouterProvider router={router} />
+        <ConfirmProvider>
+          <RouterProvider router={router} />
+        </ConfirmProvider>
       </ToastProvider>
     </AuthProvider>
   </React.StrictMode>

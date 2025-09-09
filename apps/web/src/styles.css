@@ -35,6 +35,8 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter,
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
 .muted { color: var(--muted); }
 .title { font-size: 20px; font-weight: 600; }
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display:grid; place-items:center; z-index:10000; }
+.modal { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 16px; width: 380px; }
 
 @media (max-width: 1000px) {
   .app { grid-template-columns: 1fr; }
@@ -42,4 +44,3 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter,
   .nav { display: flex; gap: 8px; }
   .grid { grid-template-columns: 1fr; }
 }
-

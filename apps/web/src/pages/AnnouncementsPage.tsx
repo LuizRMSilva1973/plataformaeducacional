@@ -2,6 +2,7 @@ import React from 'react'
 import { api, getSchoolId } from '../lib/api'
 import { useToast } from '../components/Toast'
 import { downloadCSV } from '../lib/export'
+import { useDebouncedValue } from '../lib/hooks'
 import { getSchoolId } from '../lib/api'
 
 export default function AnnouncementsPage() {
@@ -12,16 +13,27 @@ export default function AnnouncementsPage() {
   const [content, setContent] = React.useState('')
   const [classId, setClassId] = React.useState('')
   const [msg, setMsg] = React.useState('')
+  const [q, setQ] = React.useState('')
+  const [order, setOrder] = React.useState<'asc'|'desc'>('desc')
+  const [page, setPage] = React.useState(1)
+  const [limit] = React.useState(20)
+  const dq = useDebouncedValue(q, 300)
   const schoolId = getSchoolId() || 'seed-school'
 
   async function load() {
+    const qs = new URLSearchParams()
+    qs.set('page', String(page))
+    qs.set('limit', String(limit))
+    if (dq) qs.set('q', dq)
+    if (classId) qs.set('classId', classId)
+    qs.set('order', order)
     const [an, cls] = await Promise.all([
-      api<{ items:any[] }>(`/${schoolId}/communications/announcements?page=1&limit=50`),
-      api<{ items:any[] }>(`/${schoolId}/classes?page=1&limit=50`),
+      api<{ items:any[] }>(`/${schoolId}/communications/announcements?${qs.toString()}`),
+      api<{ items:any[] }>(`/${schoolId}/classes?page=1&limit=200`),
     ])
     setItems(an.items); setClasses(cls.items)
   }
-  React.useEffect(()=>{ load().catch(()=>{}) },[schoolId])
+  React.useEffect(()=>{ load().catch(()=>{}) },[schoolId, dq, classId, order, page, limit])
 
   function exportCSV(){
     const rows = items.map((an:any)=> ({ id: an.id, title: an.title, createdAt: an.createdAt }))
@@ -45,6 +57,23 @@ export default function AnnouncementsPage() {
     <div className="grid" style={{gridTemplateColumns:'1fr'}}>
       <section className="card">
         <h3>Avisos</h3>
+        <div className="row">
+          <select className="select" value={classId} onChange={e=>{ setPage(1); setClassId(e.target.value) }}>
+            <option value="">(Todas) Turmas</option>
+            {classes.map((c:any)=> <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <input className="input" placeholder="Buscar por título" value={q} onChange={e=>{ setPage(1); setQ(e.target.value) }} />
+          <select className="select" value={order} onChange={e=>{ setPage(1); setOrder(e.target.value as any) }}>
+            <option value="desc">Mais recentes</option>
+            <option value="asc">Mais antigos</option>
+          </select>
+          <button className="button" onClick={exportCSV}>Exportar CSV</button>
+        </div>
+        <div className="row">
+          <button className="button" onClick={()=> setPage(Math.max(1, page-1))}>Anterior</button>
+          <span className="muted">Página {page}</span>
+          <button className="button" onClick={()=> setPage(page+1)}>Próxima</button>
+        </div>
         <div className="row">
           <button className="button" onClick={exportCSV}>Exportar CSV</button>
         </div>

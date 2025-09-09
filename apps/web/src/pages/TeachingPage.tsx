@@ -14,12 +14,23 @@ export default function TeachingPage() {
   const [classId, setClassId] = React.useState('')
   const [subjectId, setSubjectId] = React.useState('')
   const [busy, setBusy] = React.useState(false)
+  const [fTeacher, setFTeacher] = React.useState('')
+  const [fClass, setFClass] = React.useState('')
+  const [fSubject, setFSubject] = React.useState('')
+  const [page, setPage] = React.useState(1)
+  const [limit] = React.useState(20)
 
   async function load() {
+    const qs = new URLSearchParams()
+    qs.set('page', String(page))
+    qs.set('limit', String(limit))
+    if (fTeacher) qs.set('teacherUserId', fTeacher)
+    if (fClass) qs.set('classId', fClass)
+    if (fSubject) qs.set('subjectId', fSubject)
     const [tas, cls, sub, us] = await Promise.all([
-      api<{ items:any[] }>(`/${schoolId}/teaching-assignments?page=1&limit=100`),
-      api<{ items:any[] }>(`/${schoolId}/classes?page=1&limit=100`),
-      api<{ items:any[] }>(`/${schoolId}/subjects?page=1&limit=100`),
+      api<{ items:any[] }>(`/${schoolId}/teaching-assignments?${qs.toString()}`),
+      api<{ items:any[] }>(`/${schoolId}/classes?page=1&limit=200`),
+      api<{ items:any[] }>(`/${schoolId}/subjects?page=1&limit=200`),
       api<{ items:any[] }>(`/${schoolId}/users?page=1&limit=200&role=TEACHER`),
     ])
     setItems(tas.items)
@@ -27,7 +38,7 @@ export default function TeachingPage() {
     setSubjects(sub.items)
     setTeachers(us.items.map((m:any)=> ({ id: m.id ?? m.user?.id, name: m.name ?? m.user?.name, email: m.email ?? m.user?.email })))
   }
-  React.useEffect(()=>{ load().catch(()=>{}) },[schoolId])
+  React.useEffect(()=>{ load().catch(()=>{}) },[schoolId, fTeacher, fClass, fSubject, page, limit])
 
   function exportCSV(){
     const rows = items.map((i:any)=> ({ id: i.id, teacher: i.teacher?.name, class: i.class?.name, subject: i.subject?.name }))
@@ -58,6 +69,25 @@ export default function TeachingPage() {
         <h3>Atribuições de Docência</h3>
         <div className="row">
           <button className="button" onClick={exportCSV}>Exportar CSV</button>
+        </div>
+        <div className="row">
+          <select className="select" value={fTeacher} onChange={e=>{ setPage(1); setFTeacher(e.target.value) }}>
+            <option value="">(Todos) Professores</option>
+            {teachers.map((t:any)=> <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+          <select className="select" value={fClass} onChange={e=>{ setPage(1); setFClass(e.target.value) }}>
+            <option value="">(Todas) Turmas</option>
+            {classes.map((c:any)=> <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <select className="select" value={fSubject} onChange={e=>{ setPage(1); setFSubject(e.target.value) }}>
+            <option value="">(Todas) Disciplinas</option>
+            {subjects.map((s:any)=> <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div className="row">
+          <button className="button" onClick={()=> setPage(Math.max(1, page-1))}>Anterior</button>
+          <span className="muted">Página {page}</span>
+          <button className="button" onClick={()=> setPage(page+1)}>Próxima</button>
         </div>
         <form className="form" onSubmit={create}>
           <div className="row">

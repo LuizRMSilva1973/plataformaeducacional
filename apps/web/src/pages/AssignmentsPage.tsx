@@ -2,6 +2,7 @@ import React from 'react'
 import { api, getSchoolId } from '../lib/api'
 import { useToast } from '../components/Toast'
 import { downloadCSV } from '../lib/export'
+import { useDebouncedValue } from '../lib/hooks'
 import { getSchoolId } from '../lib/api'
 
 export default function AssignmentsPage() {
@@ -10,6 +11,11 @@ export default function AssignmentsPage() {
   const [classes, setClasses] = React.useState<any[]>([])
   const [subjects, setSubjects] = React.useState<any[]>([])
   const [msg, setMsg] = React.useState('')
+  const [q, setQ] = React.useState('')
+  const [order, setOrder] = React.useState<'asc'|'desc'>('asc')
+  const [page, setPage] = React.useState(1)
+  const [limit] = React.useState(20)
+  const dq = useDebouncedValue(q, 300)
   const [title, setTitle] = React.useState('')
   const [classId, setClassId] = React.useState('')
   const [subjectId, setSubjectId] = React.useState('')
@@ -17,14 +23,21 @@ export default function AssignmentsPage() {
   const schoolId = getSchoolId() || 'seed-school'
 
   async function load() {
+    const qs = new URLSearchParams()
+    qs.set('page', String(page))
+    qs.set('limit', String(limit))
+    if (classId) qs.set('classId', classId)
+    if (subjectId) qs.set('subjectId', subjectId)
+    if (dq) qs.set('q', dq)
+    qs.set('order', order)
     const [a, c, s] = await Promise.all([
-      api<{ items: any[] }>(`/${schoolId}/assignments?page=1&limit=50`),
-      api<{ items: any[] }>(`/${schoolId}/classes?page=1&limit=50`),
-      api<{ items: any[] }>(`/${schoolId}/subjects?page=1&limit=50`),
+      api<{ items: any[] }>(`/${schoolId}/assignments?${qs.toString()}`),
+      api<{ items: any[] }>(`/${schoolId}/classes?page=1&limit=200`),
+      api<{ items: any[] }>(`/${schoolId}/subjects?page=1&limit=200`),
     ])
     setItems(a.items); setClasses(c.items); setSubjects(s.items)
   }
-  React.useEffect(()=>{ load().catch(()=>{}) },[schoolId])
+  React.useEffect(()=>{ load().catch(()=>{}) },[schoolId, classId, subjectId, dq, order, page, limit])
 
   function exportCSV(){
     const rows = items.map((a:any)=> ({ id: a.id, title: a.title, dueAt: a.dueAt || '' }))
@@ -49,7 +62,25 @@ export default function AssignmentsPage() {
       <section className="card">
         <h3>Tarefas</h3>
         <div className="row">
+          <select className="select" value={classId} onChange={e=>{ setPage(1); setClassId(e.target.value) }}>
+            <option value="">(Todas) Turmas</option>
+            {classes.map((c:any)=> <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <select className="select" value={subjectId} onChange={e=>{ setPage(1); setSubjectId(e.target.value) }}>
+            <option value="">(Todas) Disciplinas</option>
+            {subjects.map((s:any)=> <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          <input className="input" placeholder="Buscar por título" value={q} onChange={e=>{ setPage(1); setQ(e.target.value) }} />
+          <select className="select" value={order} onChange={e=>{ setPage(1); setOrder(e.target.value as any) }}>
+            <option value="asc">Mais antigas</option>
+            <option value="desc">Mais novas</option>
+          </select>
           <button className="button" onClick={exportCSV}>Exportar CSV</button>
+        </div>
+        <div className="row">
+          <button className="button" onClick={()=> setPage(Math.max(1, page-1))}>Anterior</button>
+          <span className="muted">Página {page}</span>
+          <button className="button" onClick={()=> setPage(page+1)}>Próxima</button>
         </div>
         <form className="form" onSubmit={create}>
           <div className="row">
