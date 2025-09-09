@@ -32,7 +32,23 @@ Credenciais e Configuração Padrão (dev)
   - `ADMIN_EMAIL=admin@local`
   - `ADMIN_PASSWORD=senha`
 
-**Inicialização Rápida (Docker Compose)**
+## Screenshots
+
+> Imagens de exemplo da interface (adicione os arquivos em `docs/screenshots/`):
+
+| Login | Dashboard |
+| --- | --- |
+| ![Login](docs/screenshots/login.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+
+| Usuários | Turmas | Disciplinas |
+| --- | --- | --- |
+| ![Usuários](docs/screenshots/users.png) | ![Turmas](docs/screenshots/classes.png) | ![Disciplinas](docs/screenshots/subjects.png) |
+
+| Tarefas | Avisos |
+| --- | --- |
+| ![Tarefas](docs/screenshots/assignments.png) | ![Avisos](docs/screenshots/announcements.png) |
+
+## Inicialização Rápida (Docker Compose)
 - Requisitos: Docker + Docker Compose instalados.
 - Subir serviços: `docker compose up -d`
 - URLs:
@@ -259,3 +275,44 @@ Testes (backend)
 Credenciais padrão (dev)
 - Admin: `admin@local` / `senha`
   - Pode ser alterado por env: `ADMIN_EMAIL`, `ADMIN_PASSWORD`
+## Contribuição
+
+Obrigado por contribuir! Siga as orientações abaixo para manter a qualidade do projeto.
+
+1) Ambiente
+- Node 20.x e Docker ativos.
+- Instale dependências na raiz: `npm ci`.
+- Suba em modo dev com hot reload: `npm run dev:up`.
+
+2) Fluxo de trabalho
+- Crie uma branch a partir de `main`: `feat/nome-da-feature` ou `fix/descricao`.
+- Use Conventional Commits nos títulos de commit (ex.: `feat(web): adicionar criação de turmas`).
+- Mantenha PRs pequenos e focados; descreva o “antes/depois” e passos de teste.
+
+3) Qualidade
+- Rode `npm run typecheck` e `npm run lint` antes do PR.
+- Se alterar o backend, adicione/ajuste testes em `apps/backend/test` (Vitest):
+  - `npm -w @edu/backend run test` ou `test:watch`.
+- Atualize README e exemplos (`docs/API.http`) quando modificar rotas/comportamentos.
+
+4) Testes manuais (UI)
+- Verifique login/logout, seleção de escola, e CRUD básico nas páginas.
+- Teste mensagens de erro (403/401) e validações (Zod) nas telas de criação.
+
+5) Segurança e DX
+- Evite vazar segredos em commits. Use `.env` locais.
+- Prefira middlewares e validações reutilizáveis (ex.: rate limit, Zod schemas).
+
+6) Revisão e Merge
+- Aguarde aprovação de pelo menos um revisor.
+- Squash & Merge recomendado, mantendo título de commit no padrão convencional.
+
+## Roadmap
+
+- UI: edição/remoção de itens (turmas, disciplinas, tarefas, avisos)
+- UI: matrículas e atribuições (aluno↔turma, professor↔turma/disciplinas)
+- UI: toasts e feedback mais rico (sucesso/erro)
+- API: logs estruturados com `requestId` (OK) + correlação em toda a UI (enviar `x-request-id`)
+- API: policies de autorização mais finas por papel
+- API: testes de integração adicionais (auth, memberships, assignments)
+- DevEx: pipeline de CI com lint, typecheck e testes
