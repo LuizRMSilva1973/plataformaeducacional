@@ -103,12 +103,14 @@ Credenciais de acesso pós-seed:
 **Frontend (UI) — Navegação**
 - Login: `http://localhost:5173/login` (redireciona ao painel após sucesso)
 - Painel com layout moderno (sidebar + topbar com seleção de escola):
-  - Dashboard: status e atalhos
+  - Dashboard por papel (Admin/Diretor/Professor/Aluno) com atalhos relevantes
   - Usuários: listagem com busca (nome/email)
-  - Turmas: criar e listar
-  - Disciplinas: criar e listar
-  - Tarefas: criar (título, turma, disciplina, data) e listar
-  - Avisos: criar (título, conteúdo, turma opcional) e listar
+  - Turmas: criar, editar (inline) e excluir
+  - Disciplinas: criar, editar (inline) e excluir
+  - Matrículas: criar (aluno↔turma) e excluir
+  - Atribuições: criar (professor↔turma/disciplinas) e excluir
+  - Tarefas: criar (título, turma, disciplina, data), editar (inline) e excluir
+  - Avisos: criar (título, conteúdo, turma opcional), editar (inline) e excluir
 - O token é persistido no `localStorage`. A escola selecionada também.
 
 **CORS e Variáveis**
