@@ -34,6 +34,15 @@ Authorization: Bearer {{token}}
 ### Listar usuários da escola (membros)
 GET http://localhost:3000/seed-school/users
 Authorization: Bearer {{token}}
+### Resposta (flatten):
+### {
+###   "items": [
+###     { "id": "usr_...", "name": "Diretor(a) Exemplo", "email": "diretor@local", "role": "DIRECTOR" },
+###     { "id": "usr_...", "name": "Professor(a) Exemplo", "email": "professor@local", "role": "TEACHER" },
+###     { "id": "usr_...", "name": "Aluno(a) Exemplo", "email": "aluno@local", "role": "STUDENT" }
+###   ],
+###   "meta": { "page": 1, "limit": 10, "total": 3, "pages": 1 }
+### }
 
 ### Listar memberships (diretor)
 GET http://localhost:3000/seed-school/members
