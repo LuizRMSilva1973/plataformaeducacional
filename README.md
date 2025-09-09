@@ -30,6 +30,11 @@ Como iniciar rapidamente:
 Se o login falhar, verifique se o backend está ativo e saudável:
 - Healthcheck: `curl http://localhost:3000/health` deve retornar 200.
 
+Portas em conflito
+- Se a porta 5173 já estiver em uso no host, você pode subir o frontend em outra porta sem alterar o container:
+  - `WEB_PORT=5174 docker compose up -d web`
+- O `docker-compose.yml` ajusta automaticamente o CORS do backend para `http://localhost:${WEB_PORT}`.
+
 Credenciais e Configuração Padrão (dev)
 - Admin padrão criado no boot e no seed:
   - Email: `admin@local`
