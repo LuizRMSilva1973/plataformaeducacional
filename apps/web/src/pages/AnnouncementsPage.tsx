@@ -1,6 +1,7 @@
 import React from 'react'
 import { api, getSchoolId } from '../lib/api'
 import { useToast } from '../components/Toast'
+import { downloadCSV } from '../lib/export'
 import { getSchoolId } from '../lib/api'
 
 export default function AnnouncementsPage() {
@@ -22,6 +23,11 @@ export default function AnnouncementsPage() {
   }
   React.useEffect(()=>{ load().catch(()=>{}) },[schoolId])
 
+  function exportCSV(){
+    const rows = items.map((an:any)=> ({ id: an.id, title: an.title, createdAt: an.createdAt }))
+    downloadCSV('avisos.csv', rows)
+  }
+
   async function create(e: React.FormEvent) {
     e.preventDefault()
     try {
@@ -39,6 +45,9 @@ export default function AnnouncementsPage() {
     <div className="grid" style={{gridTemplateColumns:'1fr'}}>
       <section className="card">
         <h3>Avisos</h3>
+        <div className="row">
+          <button className="button" onClick={exportCSV}>Exportar CSV</button>
+        </div>
         <form className="form" onSubmit={create}>
           <input className="input" placeholder="Título" value={title} onChange={e=>setTitle(e.target.value)} required />
           <textarea className="textarea" placeholder="Conteúdo" value={content} onChange={e=>setContent(e.target.value)} required />

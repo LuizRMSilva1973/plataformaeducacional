@@ -13,6 +13,7 @@ export function Dashboard() {
   const [schools, setSchools] = React.useState<School[]>([]);
   const [schoolId, setSchool] = React.useState<string>(getSchoolId() || '');
   const [users, setUsers] = React.useState<any[]>([]);
+  const [byRole, setByRole] = React.useState<Record<string, number>>({});
   const [assignments, setAssignments] = React.useState<any[]>([]);
   const [announcements, setAnnouncements] = React.useState<any[]>([]);
   const [classes, setClasses] = React.useState<any[]>([]);
@@ -59,6 +60,9 @@ export function Dashboard() {
           api<{ items: any[] }>(`/${schoolId}/subjects?page=1&limit=50`),
         ]);
         setUsers(u.items); setAssignments(a.items); setAnnouncements(an.items); setClasses(cls.items); setSubjects(sub.items);
+        const counts: Record<string, number> = { DIRECTOR:0, TEACHER:0, STUDENT:0 }
+        u.items.forEach((m:any)=> { counts[m.role] = (counts[m.role]||0)+1 })
+        setByRole(counts)
       } catch {}
     })();
   }, [token, schoolId]);
@@ -108,6 +112,21 @@ export function Dashboard() {
             <Link className="button" to="/announcements">Avisos</Link>
           </div>
         )}
+      </section>
+      <section className="card">
+        <h3>Distribuição de Usuários</h3>
+        {['DIRECTOR','TEACHER','STUDENT'].map((r)=>{
+          const total = (byRole.DIRECTOR||0)+(byRole.TEACHER||0)+(byRole.STUDENT||0) || 1
+          const pct = Math.round(((byRole[r]||0)/total)*100)
+          return (
+            <div key={r} style={{ marginBottom: 8 }}>
+              <div className="muted" style={{ marginBottom: 4 }}>{r} — {byRole[r]||0}</div>
+              <div style={{ background:'#0b1220', border:'1px solid var(--border)', borderRadius:6, overflow:'hidden' }}>
+                <div style={{ width: pct+'%', height:8, background: r==='STUDENT'?'#60a5fa': r==='TEACHER'?'#22c55e':'#f59e0b' }}></div>
+              </div>
+            </div>
+          )
+        })}
       </section>
     </div>
   );

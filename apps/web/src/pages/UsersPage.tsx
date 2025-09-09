@@ -1,5 +1,6 @@
 import React from 'react'
 import { api } from '../lib/api'
+import { downloadCSV } from '../lib/export'
 import { getSchoolId } from '../lib/api'
 
 export default function UsersPage() {
@@ -13,6 +14,16 @@ export default function UsersPage() {
   }
   React.useEffect(() => { load().catch(()=>{}) }, [schoolId])
 
+  function exportCSV(){
+    const rows = items.map((m:any)=> ({
+      id: m.id ?? m.user?.id,
+      name: m.name ?? m.user?.name,
+      email: m.email ?? m.user?.email,
+      role: m.role
+    }))
+    downloadCSV('usuarios.csv', rows)
+  }
+
   return (
     <div className="grid" style={{gridTemplateColumns:'1fr'}}>
       <section className="card">
@@ -20,6 +31,7 @@ export default function UsersPage() {
         <div className="row">
           <input className="input" placeholder="Buscar por nome/email" value={q} onChange={e=>setQ(e.target.value)} />
           <button className="button" onClick={load}>Buscar</button>
+          <button className="button" onClick={exportCSV}>Exportar CSV</button>
         </div>
         <ul className="list">
           {items.map((m:any)=> {

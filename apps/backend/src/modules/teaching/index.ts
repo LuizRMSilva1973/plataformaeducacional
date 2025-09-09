@@ -59,3 +59,11 @@ router.delete('/:id', requireMembership('DIRECTOR'), async (req, res) => {
   await prisma.teachingAssignment.delete({ where: { id: req.params.id } });
   res.status(204).end();
 });
+
+const patchTA = z.object({ teacherUserId: z.string().optional(), classId: z.string().optional(), subjectId: z.string().optional() });
+router.patch('/:id', requireMembership('DIRECTOR'), async (req, res) => {
+  const parsed = patchTA.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const ta = await prisma.teachingAssignment.update({ where: { id: req.params.id }, data: parsed.data });
+  res.json(ta);
+});

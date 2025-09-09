@@ -1,5 +1,6 @@
 import React from 'react'
 import { api, getSchoolId } from '../lib/api'
+import { downloadCSV } from '../lib/export'
 import { useToast } from '../components/Toast'
 
 export default function EnrollmentsPage() {
@@ -25,6 +26,11 @@ export default function EnrollmentsPage() {
   }
   React.useEffect(()=>{ load().catch(()=>{}) },[schoolId])
 
+  function exportCSV(){
+    const rows = items.map((i:any)=> ({ id: i.id, class: i.class?.name, student: i.student?.name, email: i.student?.email }))
+    downloadCSV('matriculas.csv', rows)
+  }
+
   async function create(e: React.FormEvent) {
     e.preventDefault()
     setBusy(true)
@@ -47,6 +53,9 @@ export default function EnrollmentsPage() {
     <div className="grid" style={{gridTemplateColumns:'1fr'}}>
       <section className="card">
         <h3>Matrículas</h3>
+        <div className="row">
+          <button className="button" onClick={exportCSV}>Exportar CSV</button>
+        </div>
         <form className="form" onSubmit={create}>
           <div className="row">
             <select className="select" value={classId} onChange={e=>setClassId(e.target.value)} required>
@@ -62,10 +71,9 @@ export default function EnrollmentsPage() {
         </form>
         <ul className="list">
           {items.map((i:any)=> (
-            <li key={i.id}>
-              {i.student?.name} &lt;{i.student?.email}&gt; • {i.class?.name}
-              <button className="button" style={{ float:'right' }} onClick={()=>remove(i.id)}>Remover</button>
-            </li>
+            <EnrollmentItem key={i.id} item={i} classes={classes} students={students}
+              onRemoved={(id)=>setItems(items.filter(x=>x.id!==id))}
+              onUpdated={(u)=>setItems(items.map(x=>x.id===u.id?u:x))} />
           ))}
         </ul>
       </section>
@@ -73,3 +81,44 @@ export default function EnrollmentsPage() {
   )
 }
 
+function EnrollmentItem({ item, classes, students, onRemoved, onUpdated }: { item:any, classes:any[], students:any[], onRemoved:(id:string)=>void, onUpdated:(u:any)=>void }){
+  const { show } = useToast()
+  const [edit, setEdit] = React.useState(false)
+  const [classId, setClassId] = React.useState(item.classId)
+  const [studentUserId, setStudentUserId] = React.useState(item.studentUserId)
+  async function save(){
+    const schoolId = getSchoolId() || 'seed-school'
+    const u = await api<any>(`/${schoolId}/enrollments/${item.id}`, { method:'PATCH', body: JSON.stringify({ classId, studentUserId }) })
+    onUpdated(u); setEdit(false); show('Matrícula atualizada','success')
+  }
+  async function del(){
+    if(!confirm('Remover matrícula?')) return
+    const schoolId = getSchoolId() || 'seed-school'
+    await api<void>(`/${schoolId}/enrollments/${item.id}`, { method:'DELETE' })
+    onRemoved(item.id); show('Matrícula removida','success')
+  }
+  return (
+    <li>
+      {!edit ? (
+        <>
+          {item.student?.name} &lt;{item.student?.email}&gt; • {item.class?.name}
+          <span style={{ float:'right', display:'flex', gap:8 }}>
+            <button className="button" onClick={()=>setEdit(true)}>Editar</button>
+            <button className="button" onClick={del}>Remover</button>
+          </span>
+        </>
+      ) : (
+        <div className="row">
+          <select className="select" value={studentUserId} onChange={e=>setStudentUserId(e.target.value)}>
+            {students.map((s:any)=> <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          <select className="select" value={classId} onChange={e=>setClassId(e.target.value)}>
+            {classes.map((c:any)=> <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <button className="button primary" onClick={save}>Salvar</button>
+          <button className="button" onClick={()=>setEdit(false)}>Cancelar</button>
+        </div>
+      )}
+    </li>
+  )
+}
