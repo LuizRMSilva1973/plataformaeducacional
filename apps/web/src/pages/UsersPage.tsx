@@ -22,12 +22,18 @@ export default function UsersPage() {
           <button className="button" onClick={load}>Buscar</button>
         </div>
         <ul className="list">
-          {items.map((m:any)=> (
-            <li key={m.user.id}>{m.user.name} &lt;{m.user.email}&gt; — {m.role}</li>
-          ))}
+          {items.map((m:any)=> {
+            // Backend retorna itens flatten { id, name, email, role }
+            // ou, em versões antigas, { user: { id, name, email }, role }
+            const id = m.id ?? m.user?.id
+            const name = m.name ?? m.user?.name
+            const email = m.email ?? m.user?.email
+            return (
+              <li key={id}>{name} &lt;{email}&gt; — {m.role}</li>
+            )
+          })}
         </ul>
       </section>
     </div>
   )
 }
-

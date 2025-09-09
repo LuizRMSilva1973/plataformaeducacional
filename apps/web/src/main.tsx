@@ -13,6 +13,8 @@ import AssignmentsPage from './pages/AssignmentsPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import './styles.css';
 
+import ErrorPage from './components/ErrorPage';
+
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
   {
@@ -22,6 +24,7 @@ const router = createBrowserRouter([
         <Layout />
       </Protected>
     ),
+    errorElement: <ErrorPage />,
     children: [
       { index: true, element: <Dashboard /> },
       { path: 'users', element: <UsersPage /> },
