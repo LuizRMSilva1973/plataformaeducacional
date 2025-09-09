@@ -1,8 +1,10 @@
 import React from 'react'
 import { api } from '../lib/api'
+import { useToast } from '../components/Toast'
 import { getSchoolId } from '../lib/api'
 
 export default function ClassesPage() {
+  const { show } = useToast()
   const [items, setItems] = React.useState<any[]>([])
   const [name, setName] = React.useState('')
   const [year, setYear] = React.useState<number>(new Date().getFullYear())
@@ -22,8 +24,9 @@ export default function ClassesPage() {
       setItems([c, ...items])
       setName('')
       setYear(new Date().getFullYear())
-      setMsg('Turma criada')
-    } catch(e:any) { setMsg(e?.message||'Erro'); }
+      setMsg('')
+      show('Turma criada','success')
+    } catch(e:any) { setMsg(e?.message||'Erro'); show('Erro ao criar turma','error') }
   }
 
   return (
@@ -39,17 +42,47 @@ export default function ClassesPage() {
           {msg && <span className="muted">{msg}</span>}
         </form>
         <ul className="list">
-          {items.map((c:any)=> (
-            <li key={c.id}>{c.name} — {c.year}
-              <button className="button" style={{ float:'right' }} onClick={async ()=>{
-                if (!confirm('Excluir turma?')) return
-                await api<void>(`/${getSchoolId()||'seed-school'}/classes/${c.id}`, { method:'DELETE' })
-                setItems(items.filter((x:any)=>x.id!==c.id))
-              }}>Excluir</button>
-            </li>
-          ))}
+          {items.map((c:any)=> <ClassItem key={c.id} item={c} onDeleted={(id)=>setItems(items.filter((x:any)=>x.id!==id))} onUpdated={(u)=>setItems(items.map((it:any)=> it.id===u.id?u:it))} />)}
         </ul>
       </section>
     </div>
+  )
+}
+
+function ClassItem({ item, onDeleted, onUpdated }: { item:any, onDeleted:(id:string)=>void, onUpdated:(u:any)=>void }){
+  const { show } = useToast()
+  const [edit, setEdit] = React.useState(false)
+  const [name, setName] = React.useState(item.name)
+  const [year, setYear] = React.useState(item.year)
+  async function save(){
+    const schoolId = getSchoolId() || 'seed-school'
+    const u = await api<any>(`/${schoolId}/classes/${item.id}`, { method:'PATCH', body: JSON.stringify({ name, year }) })
+    onUpdated(u); setEdit(false); show('Turma atualizada','success')
+  }
+  async function del(){
+    if(!confirm('Excluir turma?')) return
+    const schoolId = getSchoolId() || 'seed-school'
+    await api<void>(`/${schoolId}/classes/${item.id}`, { method:'DELETE' })
+    onDeleted(item.id); show('Turma excluída','success')
+  }
+  return (
+    <li>
+      {!edit ? (
+        <>
+          {item.name} — {item.year}
+          <span style={{ float:'right', display:'flex', gap:8 }}>
+            <button className="button" onClick={()=>setEdit(true)}>Editar</button>
+            <button className="button" onClick={del}>Excluir</button>
+          </span>
+        </>
+      ) : (
+        <div className="row">
+          <input className="input" value={name} onChange={e=>setName(e.target.value)} />
+          <input className="input" type="number" value={year} onChange={e=>setYear(parseInt(e.target.value||'0'))} />
+          <button className="button primary" onClick={save}>Salvar</button>
+          <button className="button" onClick={()=>setEdit(false)}>Cancelar</button>
+        </div>
+      )}
+    </li>
   )
 }

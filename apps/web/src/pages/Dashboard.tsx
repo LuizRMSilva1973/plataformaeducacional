@@ -8,6 +8,8 @@ type School = { id: string; name: string }
 export function Dashboard() {
   const { token, logout } = useAuth();
   const [health, setHealth] = React.useState<string>('checking...');
+  const [role, setRole] = React.useState<string|undefined>(undefined)
+  const [isAdmin, setIsAdmin] = React.useState<boolean>(false)
   const [schools, setSchools] = React.useState<School[]>([]);
   const [schoolId, setSchool] = React.useState<string>(getSchoolId() || '');
   const [users, setUsers] = React.useState<any[]>([]);
@@ -22,6 +24,14 @@ export function Dashboard() {
       .then((d) => setHealth(d.ok ? 'ok' : 'not ok'))
       .catch(() => setHealth('unavailable'));
   }, []);
+
+  React.useEffect(() => {
+    if (!token || !schoolId) return
+    api<{ role: string|null, isAdmin: boolean }>(`/${schoolId}/profile/me`).then((r)=>{
+      setRole(r.role || undefined)
+      setIsAdmin(!!r.isAdmin)
+    }).catch(()=>{})
+  }, [token, schoolId])
 
   React.useEffect(() => {
     if (!token) return;
@@ -64,17 +74,40 @@ export function Dashboard() {
         <div className="muted">API: {API_URL} — Health: {health}</div>
       </section>
       <section className="card">
-        <h3>Resumo</h3>
+        <h3>Resumo {isAdmin ? '· Admin' : role ? `· ${role}` : ''}</h3>
         <div className="muted">Escola: {schoolId || '—'}</div>
         <div className="muted">Usuários: {users.length} • Tarefas: {assignments.length} • Avisos: {announcements.length}</div>
       </section>
       <section className="card">
         <h3>Ações rápidas</h3>
-        <div className="row">
-          <Link className="button" to="/assignments">Ver tarefas</Link>
-          <Link className="button" to="/announcements">Ver avisos</Link>
-          <Link className="button" to="/users">Ver usuários</Link>
-        </div>
+        {isAdmin && (
+          <div className="row">
+            <Link className="button" to="/admin/schools">Gerir escolas</Link>
+            <Link className="button" to="/users">Usuários</Link>
+            <Link className="button" to="/classes">Turmas</Link>
+            <Link className="button" to="/subjects">Disciplinas</Link>
+          </div>
+        )}
+        {!isAdmin && role === 'DIRECTOR' && (
+          <div className="row">
+            <Link className="button" to="/users">Usuários</Link>
+            <Link className="button" to="/enrollments">Matrículas</Link>
+            <Link className="button" to="/teaching">Atribuições</Link>
+            <Link className="button" to="/assignments">Tarefas</Link>
+            <Link className="button" to="/announcements">Avisos</Link>
+          </div>
+        )}
+        {!isAdmin && role === 'TEACHER' && (
+          <div className="row">
+            <Link className="button" to="/assignments">Minhas tarefas</Link>
+            <Link className="button" to="/announcements">Avisos</Link>
+          </div>
+        )}
+        {!isAdmin && role === 'STUDENT' && (
+          <div className="row">
+            <Link className="button" to="/announcements">Avisos</Link>
+          </div>
+        )}
       </section>
     </div>
   );

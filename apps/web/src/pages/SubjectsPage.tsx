@@ -1,8 +1,10 @@
 import React from 'react'
 import { api } from '../lib/api'
+import { useToast } from '../components/Toast'
 import { getSchoolId } from '../lib/api'
 
 export default function SubjectsPage() {
+  const { show } = useToast()
   const [items, setItems] = React.useState<any[]>([])
   const [name, setName] = React.useState('')
   const [msg, setMsg] = React.useState('')
@@ -20,8 +22,9 @@ export default function SubjectsPage() {
       const s = await api<any>(`/${schoolId}/subjects`, { method:'POST', body: JSON.stringify({ name }) })
       setItems([s, ...items])
       setName('')
-      setMsg('Disciplina criada')
-    } catch(e:any) { setMsg(e?.message||'Erro'); }
+      setMsg('')
+      show('Disciplina criada','success')
+    } catch(e:any) { setMsg(e?.message||'Erro'); show('Erro ao criar disciplina','error') }
   }
 
   return (
@@ -36,17 +39,45 @@ export default function SubjectsPage() {
           {msg && <span className="muted">{msg}</span>}
         </form>
         <ul className="list">
-          {items.map((s:any)=> (
-            <li key={s.id}>{s.name}
-              <button className="button" style={{ float:'right' }} onClick={async ()=>{
-                if (!confirm('Excluir disciplina?')) return
-                await api<void>(`/${getSchoolId()||'seed-school'}/subjects/${s.id}`, { method:'DELETE' })
-                setItems(items.filter((x:any)=>x.id!==s.id))
-              }}>Excluir</button>
-            </li>
-          ))}
+          {items.map((s:any)=> <SubjectItem key={s.id} item={s} onDeleted={(id)=>setItems(items.filter((x:any)=>x.id!==id))} onUpdated={(u)=>setItems(items.map((it:any)=> it.id===u.id?u:it))} />)}
         </ul>
       </section>
     </div>
+  )
+}
+
+function SubjectItem({ item, onDeleted, onUpdated }: { item:any, onDeleted:(id:string)=>void, onUpdated:(u:any)=>void }){
+  const { show } = useToast()
+  const [edit, setEdit] = React.useState(false)
+  const [name, setName] = React.useState(item.name)
+  async function save(){
+    const schoolId = getSchoolId() || 'seed-school'
+    const u = await api<any>(`/${schoolId}/subjects/${item.id}`, { method:'PATCH', body: JSON.stringify({ name }) })
+    onUpdated(u); setEdit(false); show('Disciplina atualizada','success')
+  }
+  async function del(){
+    if(!confirm('Excluir disciplina?')) return
+    const schoolId = getSchoolId() || 'seed-school'
+    await api<void>(`/${schoolId}/subjects/${item.id}`, { method:'DELETE' })
+    onDeleted(item.id); show('Disciplina excluída','success')
+  }
+  return (
+    <li>
+      {!edit ? (
+        <>
+          {item.name}
+          <span style={{ float:'right', display:'flex', gap:8 }}>
+            <button className="button" onClick={()=>setEdit(true)}>Editar</button>
+            <button className="button" onClick={del}>Excluir</button>
+          </span>
+        </>
+      ) : (
+        <div className="row">
+          <input className="input" value={name} onChange={e=>setName(e.target.value)} />
+          <button className="button primary" onClick={save}>Salvar</button>
+          <button className="button" onClick={()=>setEdit(false)}>Cancelar</button>
+        </div>
+      )}
+    </li>
   )
 }

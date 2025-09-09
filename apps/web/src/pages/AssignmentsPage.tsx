@@ -1,8 +1,10 @@
 import React from 'react'
-import { api } from '../lib/api'
+import { api, getSchoolId } from '../lib/api'
+import { useToast } from '../components/Toast'
 import { getSchoolId } from '../lib/api'
 
 export default function AssignmentsPage() {
+  const { show } = useToast()
   const [items, setItems] = React.useState<any[]>([])
   const [classes, setClasses] = React.useState<any[]>([])
   const [subjects, setSubjects] = React.useState<any[]>([])
@@ -31,8 +33,9 @@ export default function AssignmentsPage() {
       const item = await api<any>(`/${schoolId}/assignments`, { method:'POST', body: JSON.stringify(body) })
       setItems([item, ...items])
       setTitle(''); setClassId(''); setSubjectId(''); setDueAt('')
-      setMsg('Tarefa criada')
-    } catch(e:any) { setMsg(e?.message||'Erro'); }
+      setMsg('')
+      show('Tarefa criada','success')
+    } catch(e:any) { setMsg(e?.message||'Erro'); show('Erro ao criar tarefa','error') }
   }
 
   return (
@@ -56,17 +59,49 @@ export default function AssignmentsPage() {
           {msg && <span className="muted">{msg}</span>}
         </form>
         <ul className="list">
-          {items.map((a:any)=> (
-            <li key={a.id}>{a.title} {a.dueAt ? `(até ${new Date(a.dueAt).toLocaleDateString()})` : ''}
-              <button className="button" style={{ float:'right' }} onClick={async ()=>{
-                if (!confirm('Excluir tarefa?')) return
-                await api<void>(`/${getSchoolId()||'seed-school'}/assignments/${a.id}`, { method:'DELETE' })
-                setItems(items.filter((x:any)=>x.id!==a.id))
-              }}>Excluir</button>
-            </li>
-          ))}
+          {items.map((a:any)=> <AssignmentItem key={a.id} item={a} onDeleted={(id)=>setItems(items.filter((x:any)=>x.id!==id))} onUpdated={(u)=>setItems(items.map((it:any)=> it.id===u.id?u:it))} />)}
         </ul>
       </section>
     </div>
+  )
+}
+
+function AssignmentItem({ item, onDeleted, onUpdated }: { item:any, onDeleted:(id:string)=>void, onUpdated:(u:any)=>void }){
+  const { show } = useToast()
+  const [edit, setEdit] = React.useState(false)
+  const [title, setTitle] = React.useState(item.title)
+  const [dueAt, setDueAt] = React.useState<string>(item.dueAt ? new Date(item.dueAt).toISOString().slice(0,10) : '')
+  async function save(){
+    const schoolId = getSchoolId() || 'seed-school'
+    const body:any = { title }
+    if (dueAt) body.dueAt = new Date(dueAt)
+    const u = await api<any>(`/${schoolId}/assignments/${item.id}`, { method:'PATCH', body: JSON.stringify(body) })
+    onUpdated(u); setEdit(false); show('Tarefa atualizada','success')
+  }
+  async function del(){
+    if(!confirm('Excluir tarefa?')) return
+    const schoolId = getSchoolId() || 'seed-school'
+    await api<void>(`/${schoolId}/assignments/${item.id}`, { method:'DELETE' })
+    onDeleted(item.id); show('Tarefa excluída','success')
+  }
+  return (
+    <li>
+      {!edit ? (
+        <>
+          {item.title} {item.dueAt ? `(até ${new Date(item.dueAt).toLocaleDateString()})` : ''}
+          <span style={{ float:'right', display:'flex', gap:8 }}>
+            <button className="button" onClick={()=>setEdit(true)}>Editar</button>
+            <button className="button" onClick={del}>Excluir</button>
+          </span>
+        </>
+      ) : (
+        <div className="row">
+          <input className="input" value={title} onChange={e=>setTitle(e.target.value)} />
+          <input className="input" type="date" value={dueAt} onChange={e=>setDueAt(e.target.value)} />
+          <button className="button primary" onClick={save}>Salvar</button>
+          <button className="button" onClick={()=>setEdit(false)}>Cancelar</button>
+        </div>
+      )}
+    </li>
   )
 }

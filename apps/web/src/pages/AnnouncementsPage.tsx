@@ -1,8 +1,10 @@
 import React from 'react'
-import { api } from '../lib/api'
+import { api, getSchoolId } from '../lib/api'
+import { useToast } from '../components/Toast'
 import { getSchoolId } from '../lib/api'
 
 export default function AnnouncementsPage() {
+  const { show } = useToast()
   const [items, setItems] = React.useState<any[]>([])
   const [classes, setClasses] = React.useState<any[]>([])
   const [title, setTitle] = React.useState('')
@@ -28,8 +30,9 @@ export default function AnnouncementsPage() {
       const item = await api<any>(`/${schoolId}/communications/announcements`, { method:'POST', body: JSON.stringify(body) })
       setItems([item, ...items])
       setTitle(''); setContent(''); setClassId('')
-      setMsg('Aviso criado')
-    } catch(e:any) { setMsg(e?.message||'Erro'); }
+      setMsg('')
+      show('Aviso criado','success')
+    } catch(e:any) { setMsg(e?.message||'Erro'); show('Erro ao criar aviso','error') }
   }
 
   return (
@@ -49,18 +52,52 @@ export default function AnnouncementsPage() {
           {msg && <span className="muted">{msg}</span>}
         </form>
         <ul className="list">
-          {items.map((an:any)=> (
-            <li key={an.id}><strong>{an.title}</strong>
-              <button className="button" style={{ float:'right' }} onClick={async ()=>{
-                if (!confirm('Excluir aviso?')) return
-                await api<void>(`/${getSchoolId()||'seed-school'}/communications/announcements/${an.id}`, { method:'DELETE' })
-                setItems(items.filter((x:any)=>x.id!==an.id))
-              }}>Excluir</button>
-              <div className="muted">{new Date(an.createdAt).toLocaleString()}</div>
-            </li>
-          ))}
+          {items.map((an:any)=> <AnnouncementItem key={an.id} item={an} onDeleted={(id)=>setItems(items.filter((x:any)=>x.id!==id))} onUpdated={(u)=>setItems(items.map((it:any)=> it.id===u.id?u:it))} />)}
         </ul>
       </section>
     </div>
+  )
+}
+
+function AnnouncementItem({ item, onDeleted, onUpdated }: { item:any, onDeleted:(id:string)=>void, onUpdated:(u:any)=>void }){
+  const { show } = useToast()
+  const [edit, setEdit] = React.useState(false)
+  const [title, setTitle] = React.useState(item.title)
+  const [content, setContent] = React.useState(item.content || '')
+  const [classId, setClassId] = React.useState(item.classId || '')
+  async function save(){
+    const schoolId = getSchoolId() || 'seed-school'
+    const u = await api<any>(`/${schoolId}/communications/announcements/${item.id}`, { method:'PATCH', body: JSON.stringify({ title, content, classId: classId || undefined }) })
+    onUpdated(u); setEdit(false); show('Aviso atualizado','success')
+  }
+  async function del(){
+    if(!confirm('Excluir aviso?')) return
+    const schoolId = getSchoolId() || 'seed-school'
+    await api<void>(`/${schoolId}/communications/announcements/${item.id}`, { method:'DELETE' })
+    onDeleted(item.id); show('Aviso excluído','success')
+  }
+  return (
+    <li>
+      {!edit ? (
+        <>
+          <strong>{item.title}</strong>
+          <span style={{ float:'right', display:'flex', gap:8 }}>
+            <button className="button" onClick={()=>setEdit(true)}>Editar</button>
+            <button className="button" onClick={del}>Excluir</button>
+          </span>
+          <div className="muted">{new Date(item.createdAt).toLocaleString()}</div>
+        </>
+      ) : (
+        <div className="form">
+          <input className="input" value={title} onChange={e=>setTitle(e.target.value)} />
+          <textarea className="textarea" value={content} onChange={e=>setContent(e.target.value)} />
+          <div className="row">
+            <input className="input" placeholder="(Opcional) classId" value={classId} onChange={e=>setClassId(e.target.value)} />
+            <button className="button primary" onClick={save}>Salvar</button>
+            <button className="button" onClick={()=>setEdit(false)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+    </li>
   )
 }
