@@ -7,7 +7,7 @@ Componentes principais
 - apps/web: SPA React + Vite
 - packages/ui: componentes React compartilhados
 - packages/config: configs base (tsconfig/eslint)
-- infra: docker-compose (Postgres, Redis, MinIO)
+- infra: docker-compose (Postgres, Backend, Web)
 - docs: rotas e exemplos de chamadas
 
 Stack e decisões
@@ -15,6 +15,20 @@ Stack e decisões
 - Autenticação: JWT; admin global; memberships por escola com papéis `DIRECTOR|TEACHER|STUDENT`.
 - Autorização: middlewares `requireAdmin` e `requireMembership(role?)` (Admin ignora escopo).
 - Página Web: esqueleto com login/dashboard (exemplo).
+
+## Servidores (dev)
+- Frontend (Vite): `http://localhost:5173`
+- Backend (API): `http://localhost:3000`
+
+Como iniciar rapidamente:
+- Docker Compose (recomendado): `docker compose up -d db backend web`
+- Apenas backend com Docker: `docker compose up -d db backend`
+- NPM workspaces (sem Docker):
+  - Backend: `npm run dev:backend`
+  - Frontend: `npm run dev:web`
+
+Se o login falhar, verifique se o backend está ativo e saudável:
+- Healthcheck: `curl http://localhost:3000/health` deve retornar 200.
 
 Credenciais e Configuração Padrão (dev)
 - Admin padrão criado no boot e no seed:
@@ -50,7 +64,7 @@ Credenciais e Configuração Padrão (dev)
 
 ## Inicialização Rápida (Docker Compose)
 - Requisitos: Docker + Docker Compose instalados.
-- Subir serviços: `docker compose up -d`
+- Subir serviços: `docker compose up -d` (sobe db, backend e web)
 - URLs:
   - Backend: `http://localhost:3000/health`
   - Frontend (Vite dev): `http://localhost:5173`
