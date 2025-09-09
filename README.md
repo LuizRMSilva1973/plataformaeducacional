@@ -73,12 +73,42 @@ Credenciais de acesso pós-seed:
   - Acesse `http://localhost:5173`
 - Teste rápido: `curl http://localhost:3000/health` → `{ "ok": true }`
 
+**Modo Dev com Hot Reload (Docker Compose)**
+- O Compose está configurado com bind mounts para desenvolvimento:
+  - Backend: mapeia `apps/backend/src` e `apps/backend/prisma` (hot reload via `tsx watch`).
+  - Frontend: mapeia `apps/web`, `packages/ui` e `packages/config` (Vite com `CHOKIDAR_USEPOLLING=true`).
+- Subir/atualizar:
+  - `docker compose up -d web backend`
+  - Se necessário rebuild: `docker compose build web backend && docker compose up -d web backend`
+- Se o navegador mostrar interface antiga, use hard refresh (Ctrl+F5) ou janela anônima.
+
+**Frontend (UI) — Navegação**
+- Login: `http://localhost:5173/login` (redireciona ao painel após sucesso)
+- Painel com layout moderno (sidebar + topbar com seleção de escola):
+  - Dashboard: status e atalhos
+  - Usuários: listagem com busca (nome/email)
+  - Turmas: criar e listar
+  - Disciplinas: criar e listar
+  - Tarefas: criar (título, turma, disciplina, data) e listar
+  - Avisos: criar (título, conteúdo, turma opcional) e listar
+- O token é persistido no `localStorage`. A escola selecionada também.
+
+**CORS e Variáveis**
+- Backend aceita `CORS_ORIGIN` (padrão dev: `http://localhost:5173`).
+- Frontend usa `VITE_API_URL` (padrão dev: `http://localhost:3000`).
+
+**Banco de Dados**
+- Postgres exposto em `localhost:55432` para ferramentas locais.
+- Migrations: `npm run db:deploy`
+- Seed: `npm run db:seed`
+
 **Scripts Úteis (raiz)**
 - `dev:backend`: inicia o backend em modo dev.
 - `dev:web`: inicia o web em modo dev (Vite).
 - `db:generate`: Prisma generate (backend).
 - `db:migrate`: Prisma migrate (backend).
 - `db:seed`: seed do banco (backend, opcional).
+- `db:reset`: reseta banco, aplica migrações e roda seed.
 - `dev:compose`: `docker compose up -d`.
 - `dev:compose:down`: derruba os serviços do compose.
 - `lint`: ESLint v9 (flat config) em todos os pacotes.

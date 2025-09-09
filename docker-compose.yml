@@ -37,6 +37,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - ./apps/backend/src:/workspace/apps/backend/src
+      - ./apps/backend/prisma:/workspace/apps/backend/prisma
 
   web:
     build:
@@ -46,11 +49,16 @@ services:
       # URL da API usada pelo frontend (acessada pelo browser)
       VITE_API_URL: http://localhost:3000
       NODE_OPTIONS: --max-old-space-size=512
+      CHOKIDAR_USEPOLLING: "true"
     restart: unless-stopped
     depends_on:
       - backend
     ports:
       - "5173:5173"
+    volumes:
+      - ./apps/web:/workspace/apps/web
+      - ./packages/ui:/workspace/packages/ui
+      - ./packages/config:/workspace/packages/config
 
 volumes:
   dbdata: {}
