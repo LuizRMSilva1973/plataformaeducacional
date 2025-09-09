@@ -78,8 +78,10 @@ Credenciais de acesso pós-seed:
   - Backend: mapeia `apps/backend/src` e `apps/backend/prisma` (hot reload via `tsx watch`).
   - Frontend: mapeia `apps/web`, `packages/ui` e `packages/config` (Vite com `CHOKIDAR_USEPOLLING=true`).
 - Subir/atualizar:
-  - `docker compose up -d web backend`
-  - Se necessário rebuild: `docker compose build web backend && docker compose up -d web backend`
+  - `npm run dev:up` (ou `docker compose up -d web backend`)
+  - Rebuild direcionado: `npm run web:build` / `npm run backend:build`
+  - Reiniciar serviço: `npm run web:restart` / `npm run backend:restart`
+  - Ver logs: `npm run dev:logs`
 - Se o navegador mostrar interface antiga, use hard refresh (Ctrl+F5) ou janela anônima.
 
 **Frontend (UI) — Navegação**
@@ -113,6 +115,27 @@ Credenciais de acesso pós-seed:
 - `dev:compose:down`: derruba os serviços do compose.
 - `lint`: ESLint v9 (flat config) em todos os pacotes.
 - `typecheck`: TypeScript em backend, web e ui.
+
+**Solução de Problemas**
+- Frontend não atualiza (UI antiga):
+  - Hard refresh (Ctrl+F5) ou aba anônima; verifique `npm run web:restart` e que os bind mounts estão ativos.
+  - Confirme `VITE_API_URL` e CORS (`CORS_ORIGIN`) apontando para `http://localhost:3000` e `http://localhost:5173`.
+- Backend unhealthy / erro Prisma no Alpine (OpenSSL):
+  - O backend usa imagem Debian (`node:20`) para evitar incompatibilidades; se alterar a base, instale `openssl1.1-compat`.
+- Migrações/seed falhando:
+  - Use `npm run db:reset` para estado limpo; isso derruba o volume e recria o banco.
+- Conflito de porta Postgres 5432:
+  - O Compose expõe `55432:5432`. Ajuste suas ferramentas locais para `localhost:55432`.
+- 401/403 nas rotas escopadas:
+  - Garanta que está enviando `Authorization: Bearer <token>` e usando um `schoolId` válido (ex.: `seed-school`).
+
+**Estrutura do Monorepo**
+- `apps/backend`: API Express + Prisma (PostgreSQL)
+- `apps/web`: SPA React (Vite) com layout, rotas protegidas e páginas de CRUD básico
+- `packages/ui`: componentes React compartilhados
+- `packages/config`: tsconfig/eslint base
+- `infra`: serviços auxiliares (ex.: docker-compose com Postgres, Redis, MinIO)
+- `docs`: rotas e exemplos HTTP (veja `docs/API.http`)
 
 **Exemplos de API (cURL)**
 - Healthcheck (sem auth):
