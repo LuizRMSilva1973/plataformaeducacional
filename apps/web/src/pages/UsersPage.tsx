@@ -100,8 +100,40 @@ export default function UsersPage() {
             const id = m.id ?? m.user?.id
             const name = m.name ?? m.user?.name
             const email = m.email ?? m.user?.email
+            const valueRole = m.role as 'DIRECTOR'|'TEACHER'|'STUDENT'
             return (
-              <li key={id}>{name} &lt;{email}&gt; — {m.role}</li>
+              <li key={id} className="row" style={{alignItems:'center', gap:8, flexWrap:'wrap'}}>
+                <span style={{flex:1}}>{name} &lt;{email}&gt;</span>
+                <select className="select" defaultValue={valueRole} onChange={async (e)=>{
+                  const newRole = e.target.value as 'DIRECTOR'|'TEACHER'|'STUDENT'
+                  try {
+                    setError('')
+                    await api(`/${schoolId}/members/${id}`, {
+                      method: 'PATCH',
+                      body: JSON.stringify({ role: newRole })
+                    })
+                    await load()
+                  } catch (err:any) {
+                    setError(err?.message || 'Falha ao mudar papel')
+                    // restaurar visualmente
+                    e.currentTarget.value = valueRole
+                  }
+                }}>
+                  <option value="DIRECTOR">Diretor</option>
+                  <option value="TEACHER">Professor</option>
+                  <option value="STUDENT">Aluno</option>
+                </select>
+                <button className="button" onClick={async ()=>{
+                  if (!confirm('Remover vínculo deste usuário com a escola?')) return
+                  try {
+                    setError('')
+                    await api(`/${schoolId}/members/${id}`, { method: 'DELETE' })
+                    await load()
+                  } catch (err:any) {
+                    setError(err?.message || 'Falha ao remover')
+                  }
+                }}>Remover</button>
+              </li>
             )
           })}
         </ul>

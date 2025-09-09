@@ -62,3 +62,34 @@ router.post('/', requireMembership('DIRECTOR'), async (req, res) => {
   });
   res.status(201).json(membership);
 });
+
+// Atualiza o papel de um usuário na escola (move membership para o novo papel)
+const changeRoleSchema = z.object({ role: z.enum(['DIRECTOR', 'TEACHER', 'STUDENT']) });
+router.patch('/:userId', requireMembership('DIRECTOR'), async (req, res) => {
+  const parsed = changeRoleSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const { role } = parsed.data;
+  const schoolId = req.schoolId!;
+  const { userId } = req.params as { userId: string };
+
+  const result = await prisma.$transaction(async (tx) => {
+    // Ativa/garante o membership no novo papel
+    const m = await tx.membership.upsert({
+      where: { userId_schoolId_role: { userId, schoolId, role } },
+      update: { status: 'ACTIVE' },
+      create: { userId, schoolId, role, status: 'ACTIVE' }
+    });
+    // Remove outros vínculos deste usuário nesta escola com papéis diferentes
+    await tx.membership.deleteMany({ where: { userId, schoolId, NOT: { role } } });
+    return m;
+  });
+  res.json(result);
+});
+
+// Remove todos os vínculos (memberships) do usuário na escola
+router.delete('/:userId', requireMembership('DIRECTOR'), async (req, res) => {
+  const schoolId = req.schoolId!;
+  const { userId } = req.params as { userId: string };
+  const out = await prisma.membership.deleteMany({ where: { userId, schoolId } });
+  res.json({ deleted: out.count });
+});
