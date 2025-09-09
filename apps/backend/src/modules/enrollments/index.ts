@@ -34,3 +34,8 @@ router.post('/', requireMembership('DIRECTOR'), rateLimit({ windowMs: 60_000, ma
   const enrollment = await prisma.enrollment.create({ data: { ...parsed.data, schoolId: req.schoolId! } });
   res.status(201).json(enrollment);
 });
+
+router.delete('/:id', requireMembership('DIRECTOR'), async (req, res) => {
+  await prisma.enrollment.delete({ where: { id: req.params.id } });
+  res.status(204).end();
+});

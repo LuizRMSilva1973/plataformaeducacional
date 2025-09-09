@@ -12,10 +12,12 @@ import { router as submissionsRouter } from '../modules/submissions/index.js';
 import { router as gradesRouter } from '../modules/grades/index.js';
 import { router as attendanceRouter } from '../modules/attendance/index.js';
 import { router as communicationsRouter } from '../modules/communications/index.js';
+import { router as profileRouter } from '../modules/profile/index.js';
 
 export const router = Router();
 
 router.use('/:schoolId', schoolScope, Router()
+  .use('/profile', profileRouter)
   .use('/schools', schoolsRouter)
   .use('/users', usersRouter)
   .use('/members', membershipsRouter)
@@ -29,4 +31,3 @@ router.use('/:schoolId', schoolScope, Router()
   .use('/attendance', attendanceRouter)
   .use('/communications', communicationsRouter)
 );
-

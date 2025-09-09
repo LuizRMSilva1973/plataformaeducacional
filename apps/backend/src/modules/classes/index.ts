@@ -39,3 +39,16 @@ router.post('/', requireMembership('DIRECTOR'), async (req, res) => {
   const cls = await prisma.class.create({ data: { ...parsed.data, schoolId: req.schoolId! } });
   res.status(201).json(cls);
 });
+
+const updateClassSchema = z.object({ name: z.string().min(1).optional(), year: z.number().int().optional() });
+router.patch('/:id', requireMembership('DIRECTOR'), async (req, res) => {
+  const parsed = updateClassSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const cls = await prisma.class.update({ where: { id: req.params.id }, data: parsed.data });
+  res.json(cls);
+});
+
+router.delete('/:id', requireMembership('DIRECTOR'), async (req, res) => {
+  await prisma.class.delete({ where: { id: req.params.id } });
+  res.status(204).end();
+});

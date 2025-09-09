@@ -42,3 +42,16 @@ router.post('/', requireMembership('TEACHER'), rateLimit({ windowMs: 60_000, max
   const assignment = await prisma.assignment.create({ data: { ...parsed.data, schoolId: req.schoolId! } });
   res.status(201).json(assignment);
 });
+
+const patchSchema = z.object({ title: z.string().min(1).optional(), dueAt: z.coerce.date().optional() });
+router.patch('/:id', requireMembership('TEACHER'), async (req, res) => {
+  const parsed = patchSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const updated = await prisma.assignment.update({ where: { id: req.params.id }, data: parsed.data });
+  res.json(updated);
+});
+
+router.delete('/:id', requireMembership('TEACHER'), async (req, res) => {
+  await prisma.assignment.delete({ where: { id: req.params.id } });
+  res.status(204).end();
+});

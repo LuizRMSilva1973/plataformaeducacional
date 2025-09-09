@@ -74,3 +74,16 @@ router.post('/messages', requireMembership(), rateLimit({ windowMs: 60_000, max:
   const msg = await prisma.message.create({ data: { ...parsed.data, fromUserId: req.user!.id, schoolId: req.schoolId! } });
   res.status(201).json(msg);
 });
+
+const patchAnn = z.object({ title: z.string().min(1).optional(), content: z.string().min(1).optional(), classId: z.string().optional() });
+router.patch('/announcements/:id', requireMembership('DIRECTOR'), async (req, res) => {
+  const parsed = patchAnn.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const ann = await prisma.announcement.update({ where: { id: req.params.id }, data: parsed.data });
+  res.json(ann);
+});
+
+router.delete('/announcements/:id', requireMembership('DIRECTOR'), async (req, res) => {
+  await prisma.announcement.delete({ where: { id: req.params.id } });
+  res.status(204).end();
+});

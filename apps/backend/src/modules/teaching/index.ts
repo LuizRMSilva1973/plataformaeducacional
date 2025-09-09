@@ -40,3 +40,8 @@ router.post('/', requireMembership('DIRECTOR'), rateLimit({ windowMs: 60_000, ma
   const ta = await prisma.teachingAssignment.create({ data: { ...parsed.data, schoolId: req.schoolId! } });
   res.status(201).json(ta);
 });
+
+router.delete('/:id', requireMembership('DIRECTOR'), async (req, res) => {
+  await prisma.teachingAssignment.delete({ where: { id: req.params.id } });
+  res.status(204).end();
+});
