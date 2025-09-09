@@ -50,11 +50,17 @@ export default function AnnouncementsPage() {
         </form>
         <ul className="list">
           {items.map((an:any)=> (
-            <li key={an.id}><strong>{an.title}</strong><div className="muted">{new Date(an.createdAt).toLocaleString()}</div></li>
+            <li key={an.id}><strong>{an.title}</strong>
+              <button className="button" style={{ float:'right' }} onClick={async ()=>{
+                if (!confirm('Excluir aviso?')) return
+                await api<void>(`/${getSchoolId()||'seed-school'}/communications/announcements/${an.id}`, { method:'DELETE' })
+                setItems(items.filter((x:any)=>x.id!==an.id))
+              }}>Excluir</button>
+              <div className="muted">{new Date(an.createdAt).toLocaleString()}</div>
+            </li>
           ))}
         </ul>
       </section>
     </div>
   )
 }
-

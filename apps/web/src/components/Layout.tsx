@@ -58,6 +58,8 @@ export function Layout() {
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/users">Usuários</NavLink>}
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/classes">Turmas</NavLink>}
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/subjects">Disciplinas</NavLink>}
+          {(isAdmin || role === 'DIRECTOR') && <NavLink to="/enrollments">Matrículas</NavLink>}
+          {(isAdmin || role === 'DIRECTOR') && <NavLink to="/teaching">Atribuições</NavLink>}
           {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/assignments">Tarefas</NavLink>}
           {(isAdmin || role === 'DIRECTOR' || role === 'TEACHER' || role === 'STUDENT') && <NavLink to="/announcements">Avisos</NavLink>}
           {isAdmin && <NavLink to="/admin/schools">Admin: Escolas</NavLink>}

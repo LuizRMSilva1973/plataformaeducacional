@@ -37,11 +37,16 @@ export default function SubjectsPage() {
         </form>
         <ul className="list">
           {items.map((s:any)=> (
-            <li key={s.id}>{s.name}</li>
+            <li key={s.id}>{s.name}
+              <button className="button" style={{ float:'right' }} onClick={async ()=>{
+                if (!confirm('Excluir disciplina?')) return
+                await api<void>(`/${getSchoolId()||'seed-school'}/subjects/${s.id}`, { method:'DELETE' })
+                setItems(items.filter((x:any)=>x.id!==s.id))
+              }}>Excluir</button>
+            </li>
           ))}
         </ul>
       </section>
     </div>
   )
 }
-

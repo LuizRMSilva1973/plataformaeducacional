@@ -22,7 +22,19 @@ router.get('/', requireMembership(), async (req, res) => {
   const where = { schoolId: req.schoolId!, ...(studentUserId ? { studentUserId } : {}), ...(classId ? { classId } : {}) };
   const [total, items] = await Promise.all([
     prisma.enrollment.count({ where }),
-    prisma.enrollment.findMany({ where, skip: p.skip, take: p.take, orderBy: { id: order ?? 'asc' } })
+    prisma.enrollment.findMany({
+      where,
+      skip: p.skip,
+      take: p.take,
+      orderBy: { id: order ?? 'asc' },
+      select: {
+        id: true,
+        classId: true,
+        studentUserId: true,
+        student: { select: { id: true, name: true, email: true } },
+        class: { select: { id: true, name: true, year: true } },
+      }
+    })
   ]);
   res.json({ items, meta: buildMeta(total, p) });
 });

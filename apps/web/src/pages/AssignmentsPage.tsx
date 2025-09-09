@@ -57,11 +57,16 @@ export default function AssignmentsPage() {
         </form>
         <ul className="list">
           {items.map((a:any)=> (
-            <li key={a.id}>{a.title} {a.dueAt ? `(até ${new Date(a.dueAt).toLocaleDateString()})` : ''}</li>
+            <li key={a.id}>{a.title} {a.dueAt ? `(até ${new Date(a.dueAt).toLocaleDateString()})` : ''}
+              <button className="button" style={{ float:'right' }} onClick={async ()=>{
+                if (!confirm('Excluir tarefa?')) return
+                await api<void>(`/${getSchoolId()||'seed-school'}/assignments/${a.id}`, { method:'DELETE' })
+                setItems(items.filter((x:any)=>x.id!==a.id))
+              }}>Excluir</button>
+            </li>
           ))}
         </ul>
       </section>
     </div>
   )
 }
-

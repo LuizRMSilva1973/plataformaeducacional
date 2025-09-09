@@ -40,11 +40,16 @@ export default function ClassesPage() {
         </form>
         <ul className="list">
           {items.map((c:any)=> (
-            <li key={c.id}>{c.name} — {c.year}</li>
+            <li key={c.id}>{c.name} — {c.year}
+              <button className="button" style={{ float:'right' }} onClick={async ()=>{
+                if (!confirm('Excluir turma?')) return
+                await api<void>(`/${getSchoolId()||'seed-school'}/classes/${c.id}`, { method:'DELETE' })
+                setItems(items.filter((x:any)=>x.id!==c.id))
+              }}>Excluir</button>
+            </li>
           ))}
         </ul>
       </section>
     </div>
   )
 }
-

@@ -28,7 +28,21 @@ router.get('/', requireMembership(), async (req, res) => {
   };
   const [total, items] = await Promise.all([
     prisma.teachingAssignment.count({ where }),
-    prisma.teachingAssignment.findMany({ where, skip: p.skip, take: p.take, orderBy: { id: order ?? 'asc' } })
+    prisma.teachingAssignment.findMany({
+      where,
+      skip: p.skip,
+      take: p.take,
+      orderBy: { id: order ?? 'asc' },
+      select: {
+        id: true,
+        teacherUserId: true,
+        classId: true,
+        subjectId: true,
+        teacher: { select: { id: true, name: true, email: true } },
+        class: { select: { id: true, name: true, year: true } },
+        subject: { select: { id: true, name: true } },
+      }
+    })
   ]);
   res.json({ items, meta: buildMeta(total, p) });
 });
