@@ -20,6 +20,7 @@ export default function AssignmentsPage() {
   const [subjectId, setSubjectId] = React.useState('')
   const [dueAt, setDueAt] = React.useState('')
   const schoolId = getSchoolId() || 'seed-school'
+  const [role, setRole] = React.useState<string|undefined>(undefined)
 
   const load = React.useCallback(async () => {
     const qs = new URLSearchParams()
@@ -29,12 +30,14 @@ export default function AssignmentsPage() {
     if (subjectId) qs.set('subjectId', subjectId)
     if (dq) qs.set('q', dq)
     qs.set('order', order)
-    const [a, c, s] = await Promise.all([
+    const [a, c, s, me] = await Promise.all([
       api<{ items: any[] }>(`/${schoolId}/assignments?${qs.toString()}`),
       api<{ items: any[] }>(`/${schoolId}/classes?page=1&limit=200`),
       api<{ items: any[] }>(`/${schoolId}/subjects?page=1&limit=200`),
+      api<{ role: string|null }>(`/${schoolId}/profile/me`).catch(()=>({ role: null } as any)),
     ])
     setItems(a.items); setClasses(c.items); setSubjects(s.items)
+    setRole(me.role || undefined)
   }, [schoolId, classId, subjectId, dq, order, page, limit])
   React.useEffect(()=>{ load().catch(()=>{}) },[load])
 
@@ -98,18 +101,27 @@ export default function AssignmentsPage() {
           {msg && <span className="muted">{msg}</span>}
         </form>
         <ul className="list">
-          {items.map((a:any)=> <AssignmentItem key={a.id} item={a} onDeleted={(id)=>setItems(items.filter((x:any)=>x.id!==id))} onUpdated={(u)=>setItems(items.map((it:any)=> it.id===u.id?u:it))} />)}
+          {items.map((a:any)=> <AssignmentItem key={a.id} item={a} role={role} onDeleted={(id)=>setItems(items.filter((x:any)=>x.id!==id))} onUpdated={(u)=>setItems(items.map((it:any)=> it.id===u.id?u:it))} />)}
         </ul>
       </section>
     </div>
   )
 }
 
-function AssignmentItem({ item, onDeleted, onUpdated }: { item:any, onDeleted:(id:string)=>void, onUpdated:(u:any)=>void }){
+function AssignmentItem({ item, onDeleted, onUpdated, role }: { item:any, onDeleted:(id:string)=>void, onUpdated:(u:any)=>void, role?: string }){
   const { show } = useToast()
   const [edit, setEdit] = React.useState(false)
   const [title, setTitle] = React.useState(item.title)
   const [dueAt, setDueAt] = React.useState<string>(item.dueAt ? new Date(item.dueAt).toISOString().slice(0,10) : '')
+  async function submit(){
+    const schoolId = getSchoolId() || 'seed-school'
+    try {
+      await api<void>(`/${schoolId}/submissions`, { method:'POST', body: JSON.stringify({ assignmentId: item.id }) })
+      show('Entrega enviada','success')
+    } catch (e:any) {
+      show(e?.message || 'Falha ao enviar entrega','error')
+    }
+  }
   async function save(){
     const schoolId = getSchoolId() || 'seed-school'
     const body:any = { title }
@@ -129,6 +141,7 @@ function AssignmentItem({ item, onDeleted, onUpdated }: { item:any, onDeleted:(i
         <>
           {item.title} {item.dueAt ? `(até ${new Date(item.dueAt).toLocaleDateString()})` : ''}
           <span style={{ float:'right', display:'flex', gap:8 }}>
+            {role === 'STUDENT' && <button className="button" onClick={submit}>Enviar</button>}
             <button className="button" onClick={()=>setEdit(true)}>Editar</button>
             <button className="button" onClick={del}>Excluir</button>
           </span>
