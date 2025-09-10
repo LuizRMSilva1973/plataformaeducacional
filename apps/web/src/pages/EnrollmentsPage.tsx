@@ -12,6 +12,10 @@ export default function EnrollmentsPage() {
   const [classId, setClassId] = React.useState('')
   const [studentUserId, setStudentUserId] = React.useState('')
   const [busy, setBusy] = React.useState(false)
+  const [creating, setCreating] = React.useState(false)
+  const [cName, setCName] = React.useState('')
+  const [cEmail, setCEmail] = React.useState('')
+  const [cPass, setCPass] = React.useState('')
   const canSubmit = !!classId && !!studentUserId && !busy
 
   async function load() {
@@ -52,7 +56,36 @@ export default function EnrollmentsPage() {
         <h3>Matrículas</h3>
         <div className="row">
           <button className="button" onClick={exportCSV}>Exportar CSV</button>
+          <button className="button" onClick={()=> setCreating(v=>!v)}>{creating ? 'Cancelar' : 'Criar aluno'}</button>
         </div>
+        {creating && (
+          <div className="row" style={{gap:8, flexWrap:'wrap', marginTop:8}}>
+            <input className="input" placeholder="Nome do aluno" value={cName} onChange={e=>setCName(e.target.value)} />
+            <input className="input" placeholder="Email do aluno" value={cEmail} onChange={e=>setCEmail(e.target.value)} />
+            <input className="input" placeholder="Senha" type="password" value={cPass} onChange={e=>setCPass(e.target.value)} />
+            <button className="button" disabled={!cName || !cEmail || !cPass || busy} onClick={async ()=>{
+              try {
+                setBusy(true)
+                // 1) cria usuário (ou reutiliza existente pelo backend)
+                const u = await api<{ id: string }>(`/auth/dev-register`, {
+                  method: 'POST',
+                  body: JSON.stringify({ name: cName.trim(), email: cEmail.trim(), password: cPass, isAdmin: false })
+                })
+                // 2) vincula como STUDENT na escola atual
+                await api(`/${schoolId}/members`, { method: 'POST', body: JSON.stringify({ userId: u.id, role: 'STUDENT' }) })
+                // 3) recarrega lista de alunos e pré-seleciona o novo
+                const us = await api<{ items:any[] }>(`/${schoolId}/users?page=1&limit=200&role=STUDENT`)
+                const mapped = us.items.map((m:any)=> ({ id: m.id ?? m.user?.id, name: m.name ?? m.user?.name, email: m.email ?? m.user?.email }))
+                setStudents(mapped)
+                setStudentUserId(u.id)
+                setCName(''); setCEmail(''); setCPass(''); setCreating(false)
+                show('Aluno criado e vinculado', 'success')
+              } catch(e:any){
+                show(e?.message || 'Erro ao criar aluno','error')
+              } finally { setBusy(false) }
+            }}>Salvar aluno</button>
+          </div>
+        )}
         <form className="form" onSubmit={create}>
           <div className="row">
             <select className="select" value={classId} onChange={e=>setClassId(e.target.value)} required>
