@@ -85,11 +85,17 @@ export default function MessagesPage() {
           </div>
         </form>
         <ul className="list">
-          {items.map((m:any)=> (
-            <li key={m.id}>
-              {new Date(m.createdAt).toLocaleString()} • {m.content}
-            </li>
-          ))}
+          {items.map((m:any)=> {
+            const from = m.fromUser?.name || m.fromUserId || '—'
+            const to = m.toUser?.name || m.toUserId || (m.class?.name ? `Turma ${m.class.name}` : '—')
+            return (
+              <li key={m.id}>
+                <div className="muted">{new Date(m.createdAt).toLocaleString()}</div>
+                <div><strong>{from}</strong> → <strong>{to}</strong></div>
+                <div>{m.content}</div>
+              </li>
+            )
+          })}
           {items.length===0 && <li className="muted">Nenhuma mensagem ainda.</li>}
         </ul>
       </section>

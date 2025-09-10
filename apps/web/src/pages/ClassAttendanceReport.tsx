@@ -1,5 +1,6 @@
 import React from 'react'
 import { api, getSchoolId } from '../lib/api'
+import { downloadCSV } from '../lib/export'
 
 export default function ClassAttendanceReport() {
   const schoolId = getSchoolId() || 'seed-school'
@@ -65,6 +66,10 @@ export default function ClassAttendanceReport() {
           <button className="button" onClick={()=> setPage(Math.max(1, page-1))}>Anterior</button>
           <span className="muted">Página {page}</span>
           <button className="button" onClick={()=> setPage(page+1)}>Próxima</button>
+          <button className="button" onClick={()=>{
+            const rows = items.map((a:any)=> ({ id: a.id, date: a.date, status: a.status, classId: a.classId, studentUserId: a.studentUserId }))
+            downloadCSV('presencas.csv', rows)
+          }}>Exportar CSV</button>
         </div>
         <ul className="list">
           {items.map((a:any)=> (
@@ -76,4 +81,3 @@ export default function ClassAttendanceReport() {
     </div>
   )
 }
-

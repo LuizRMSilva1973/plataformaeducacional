@@ -54,7 +54,23 @@ router.get('/messages', requireMembership(), async (req, res) => {
   };
   const [total, items] = await Promise.all([
     prisma.message.count({ where }),
-    prisma.message.findMany({ where, skip: p.skip, take: p.take, orderBy: { createdAt: order ?? 'desc' } })
+    prisma.message.findMany({
+      where,
+      skip: p.skip,
+      take: p.take,
+      orderBy: { createdAt: order ?? 'desc' },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        classId: true,
+        fromUserId: true,
+        toUserId: true,
+        fromUser: { select: { id: true, name: true, email: true } },
+        toUser: { select: { id: true, name: true, email: true } },
+        class: { select: { id: true, name: true } },
+      }
+    })
   ]);
   res.json({ items, meta: buildMeta(total, p) });
 });
