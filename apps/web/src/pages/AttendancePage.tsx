@@ -26,12 +26,16 @@ export default function AttendancePage() {
 
   React.useEffect(()=>{ load().catch(()=>{}) },[load])
 
+  const [busy, setBusy] = React.useState(false)
   async function create(e: React.FormEvent){
     e.preventDefault()
     const payload = { classId, studentUserId, date: new Date(date), status }
-    const item = await api<any>(`/${schoolId}/attendance`, { method:'POST', body: JSON.stringify(payload) })
-    setItems([item, ...items])
-    show('Presença registrada','success')
+    setBusy(true)
+    try {
+      const item = await api<any>(`/${schoolId}/attendance`, { method:'POST', body: JSON.stringify(payload) })
+      setItems([item, ...items])
+      show('Presença registrada','success')
+    } finally { setBusy(false) }
   }
 
   return (
@@ -54,7 +58,7 @@ export default function AttendancePage() {
               <option value="ABSENT">Faltou</option>
               <option value="LATE">Atraso</option>
             </select>
-            <button className="button primary">Registrar</button>
+            <button className={`button primary${busy?' loading':''}`} disabled={busy}>Registrar</button>
           </div>
         </form>
         <ul className="list">
@@ -68,4 +72,3 @@ export default function AttendancePage() {
     </div>
   )
 }
-

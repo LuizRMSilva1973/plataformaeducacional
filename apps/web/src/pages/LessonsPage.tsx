@@ -95,6 +95,9 @@ function CreateLesson({ onCreated }: { onCreated: (x:any)=>void }){
   async function submit(e: React.FormEvent){
     e.preventDefault()
     try {
+      const btn = (e.target as HTMLFormElement).querySelector('button[type="submit"]') as HTMLButtonElement | null
+      if (btn) btn.classList.add('loading')
+      ;(e.target as HTMLFormElement).querySelectorAll('input,select,textarea,button').forEach(el=> (el as HTMLInputElement).disabled = true)
       let fileId: string | undefined
       if (contentType === 'FILE' && file) {
         const base64 = await toBase64(file)
@@ -109,6 +112,12 @@ function CreateLesson({ onCreated }: { onCreated: (x:any)=>void }){
       setTitle(''); setBody(''); setFile(null); setClassId(''); setSubjectId('')
       show('Conteúdo criado','success')
     } catch (e:any) { show(e?.message || 'Falha ao criar','error') }
+    finally {
+      const form = (e.target as HTMLFormElement)
+      const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement | null
+      if (btn) btn.classList.remove('loading')
+      form.querySelectorAll('input,select,textarea,button').forEach(el=> (el as HTMLInputElement).disabled = false)
+    }
   }
 
   return (

@@ -48,7 +48,11 @@ export default function AssignmentsPage() {
 
   async function create(e: React.FormEvent) {
     e.preventDefault()
+    const form = e.target as HTMLFormElement
+    const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement | null
     try {
+      if (btn) btn.classList.add('loading')
+      form.querySelectorAll('input,select,textarea,button').forEach(el=> (el as HTMLInputElement).disabled = true)
       const body:any = { title, classId, subjectId }
       if (dueAt) body.dueAt = new Date(dueAt).toISOString()
       const item = await api<any>(`/${schoolId}/assignments`, { method:'POST', body: JSON.stringify(body) })
@@ -57,6 +61,10 @@ export default function AssignmentsPage() {
       setMsg('')
       show('Tarefa criada','success')
     } catch(e:any) { setMsg(e?.message||'Erro'); show('Erro ao criar tarefa','error') }
+    finally {
+      if (btn) btn.classList.remove('loading')
+      form.querySelectorAll('input,select,textarea,button').forEach(el=> (el as HTMLInputElement).disabled = false)
+    }
   }
 
   return (
@@ -116,24 +124,41 @@ function AssignmentItem({ item, onDeleted, onUpdated, role }: { item:any, onDele
   async function submit(){
     const schoolId = getSchoolId() || 'seed-school'
     try {
+      const btn = document.activeElement as HTMLButtonElement | null
+      if (btn) btn.classList.add('loading')
       await api<void>(`/${schoolId}/submissions`, { method:'POST', body: JSON.stringify({ assignmentId: item.id }) })
       show('Entrega enviada','success')
     } catch (e:any) {
       show(e?.message || 'Falha ao enviar entrega','error')
+    } finally {
+      const btn = document.activeElement as HTMLButtonElement | null
+      if (btn) btn?.classList.remove('loading')
     }
   }
   async function save(){
     const schoolId = getSchoolId() || 'seed-school'
     const body:any = { title }
     if (dueAt) body.dueAt = new Date(dueAt)
-    const u = await api<any>(`/${schoolId}/assignments/${item.id}`, { method:'PATCH', body: JSON.stringify(body) })
-    onUpdated(u); setEdit(false); show('Tarefa atualizada','success')
+    const btn = document.activeElement as HTMLButtonElement | null
+    try {
+      if (btn) btn.classList.add('loading')
+      const u = await api<any>(`/${schoolId}/assignments/${item.id}`, { method:'PATCH', body: JSON.stringify(body) })
+      onUpdated(u); setEdit(false); show('Tarefa atualizada','success')
+    } finally {
+      if (btn) btn?.classList.remove('loading')
+    }
   }
   async function del(){
     if(!confirm('Excluir tarefa?')) return
     const schoolId = getSchoolId() || 'seed-school'
-    await api<void>(`/${schoolId}/assignments/${item.id}`, { method:'DELETE' })
-    onDeleted(item.id); show('Tarefa excluída','success')
+    const btn = document.activeElement as HTMLButtonElement | null
+    try {
+      if (btn) btn.classList.add('loading')
+      await api<void>(`/${schoolId}/assignments/${item.id}`, { method:'DELETE' })
+      onDeleted(item.id); show('Tarefa excluída','success')
+    } finally {
+      if (btn) btn?.classList.remove('loading')
+    }
   }
   return (
     <li>
