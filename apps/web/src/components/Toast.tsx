@@ -30,7 +30,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           return (
             <div key={t.id} className="card" style={{ borderLeft: `4px solid ${
               t.type==='success' ? '#22c55e' : t.type==='error' ? '#ef4444' : '#60a5fa'}` }}>
-              <div>{text}</div>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <span aria-hidden="true">
+                  {t.type==='success' ? '✓' : t.type==='error' ? '⚠' : 'ℹ'}
+                </span>
+                <span>{text}</span>
+              </div>
               {requestId && (
                 <div className="muted" style={{ marginTop: 4, display:'flex', alignItems:'center', gap:8 }}>
                   <code style={{ background:'#0b1220', padding:'2px 6px', borderRadius:4 }}>req {requestId}</code>

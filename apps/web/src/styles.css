@@ -33,6 +33,11 @@ body { margin: 0; background: radial-gradient(1200px 800px at 10% -10%, rgba(34,
 .button:hover { transform: translateY(-1px); }
 .button.outline { background: transparent; color: var(--text); border-color: var(--accent); }
 .button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+/* Spinner para botões carregando */
+.button.loading { position: relative; color: transparent !important; }
+.button.loading::after { content: ''; position: absolute; inset: 0; margin: auto; width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); border-top-color: #fff; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg) } }
 .grid { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 18px; }
 .card { background: linear-gradient(180deg, rgba(17,24,39,0.9), rgba(17,24,39,0.85)); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); }
 .card h3 { margin: 0 0 10px; font-size: 16px; letter-spacing: .2px; }
@@ -51,6 +56,16 @@ body { margin: 0; background: radial-gradient(1200px 800px at 10% -10%, rgba(34,
 
 /* Pequenas melhorias de acessibilidade */
 .nav a:focus-visible, .button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(96,165,250,0.25); }
+
+/* Skeleton shimmer */
+.skeleton-list { display: grid; gap: 8px; }
+.skeleton-item { height: 56px; background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02), rgba(255,255,255,0.06)); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 10px; border: 1px solid var(--border); }
+@keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+
+/* RichTextEditor */
+.rte-toolbar { display: flex; gap: 6px; margin-bottom: 8px; }
+.rte-editor { min-height: 160px; padding: 10px 12px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; }
+.rte-editor:empty::before { content: attr(data-placeholder); color: var(--muted); }
 
 @media (max-width: 1000px) {
   .app { grid-template-columns: 1fr; }

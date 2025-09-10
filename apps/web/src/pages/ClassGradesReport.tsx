@@ -14,6 +14,7 @@ export default function ClassGradesReport() {
   const [page, setPage] = React.useState(1)
   const [limit] = React.useState(50)
 
+  const [loading, setLoading] = React.useState(true)
   const load = React.useCallback(async () => {
     const [cls, sub, us] = await Promise.all([
       api<{ items:any[] }>(`/${schoolId}/classes?page=1&limit=200`),
@@ -37,7 +38,7 @@ export default function ClassGradesReport() {
   }, [schoolId, classId, subjectId, studentUserId, page, limit])
 
   React.useEffect(()=>{ load().catch(()=>{}) },[load])
-  React.useEffect(()=>{ query().catch(()=>{}) },[query])
+  React.useEffect(()=>{ query().then(()=>setLoading(false)).catch(()=>setLoading(false)) },[query])
 
   return (
     <div className="grid" style={{gridTemplateColumns:'1fr'}}>
@@ -66,15 +67,21 @@ export default function ClassGradesReport() {
             downloadCSV('notas.csv', rows)
           }}>Exportar CSV</button>
         </div>
-        <ul className="list">
-          {items.map((g:any)=> (
-            <li key={g.id}>
-              {new Date(g.gradedAt).toLocaleString()} • {g.value}
-              <div className="muted">Turma: {g.class?.name || g.classId} • Disciplina: {g.subject?.name || g.subjectId} • Aluno: {g.student?.name || g.studentUserId}</div>
-            </li>
-          ))}
-          {items.length===0 && <li className="muted">Nenhuma nota encontrada.</li>}
-        </ul>
+        {!loading ? (
+          <ul className="list">
+            {items.map((g:any)=> (
+              <li key={g.id}>
+                {new Date(g.gradedAt).toLocaleString()} • {g.value}
+                <div className="muted">Turma: {g.class?.name || g.classId} • Disciplina: {g.subject?.name || g.subjectId} • Aluno: {g.student?.name || g.studentUserId}</div>
+              </li>
+            ))}
+            {items.length===0 && <li className="muted">Nenhuma nota encontrada.</li>}
+          </ul>
+        ) : (
+          <div className="skeleton-list">
+            {Array.from({length:6}).map((_,i)=> <div key={i} className="skeleton-item" />)}
+          </div>
+        )}
       </section>
     </div>
   )

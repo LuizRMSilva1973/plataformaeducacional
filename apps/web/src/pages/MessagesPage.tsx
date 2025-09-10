@@ -18,6 +18,7 @@ export default function MessagesPage() {
   const [page, setPage] = React.useState(1)
   const [limit] = React.useState(20)
 
+  const [loading, setLoading] = React.useState(true)
   const load = React.useCallback(async () => {
     const qs = new URLSearchParams()
     qs.set('page', String(page))
@@ -34,6 +35,7 @@ export default function MessagesPage() {
     setItems(msgs.items)
     setClasses(cls.items)
     setUsers(us.items.map((m:any)=> ({ id: m.id ?? m.user?.id, name: m.name ?? m.user?.name, email: m.email ?? m.user?.email })))
+    setLoading(false)
   }, [schoolId, q, page, limit, fClass, fFrom, fTo])
 
   React.useEffect(()=>{ load().catch(()=>{}) },[load])
@@ -84,20 +86,26 @@ export default function MessagesPage() {
             <button className="button primary">Enviar</button>
           </div>
         </form>
-        <ul className="list">
-          {items.map((m:any)=> {
-            const from = m.fromUser?.name || m.fromUserId || '—'
-            const to = m.toUser?.name || m.toUserId || (m.class?.name ? `Turma ${m.class.name}` : '—')
-            return (
-              <li key={m.id}>
-                <div className="muted">{new Date(m.createdAt).toLocaleString()}</div>
-                <div><strong>{from}</strong> → <strong>{to}</strong></div>
-                <div>{m.content}</div>
-              </li>
-            )
-          })}
-          {items.length===0 && <li className="muted">Nenhuma mensagem ainda.</li>}
-        </ul>
+        {!loading ? (
+          <ul className="list">
+            {items.map((m:any)=> {
+              const from = m.fromUser?.name || m.fromUserId || '—'
+              const to = m.toUser?.name || m.toUserId || (m.class?.name ? `Turma ${m.class.name}` : '—')
+              return (
+                <li key={m.id}>
+                  <div className="muted">{new Date(m.createdAt).toLocaleString()}</div>
+                  <div><strong>{from}</strong> → <strong>{to}</strong></div>
+                  <div>{m.content}</div>
+                </li>
+              )
+            })}
+            {items.length===0 && <li className="muted">Nenhuma mensagem ainda.</li>}
+          </ul>
+        ) : (
+          <div className="skeleton-list">
+            {Array.from({length:6}).map((_,i)=> <div key={i} className="skeleton-item" />)}
+          </div>
+        )}
       </section>
     </div>
   )

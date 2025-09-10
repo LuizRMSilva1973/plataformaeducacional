@@ -15,6 +15,7 @@ export default function ClassAttendanceReport() {
   const [page, setPage] = React.useState(1)
   const [limit] = React.useState(50)
 
+  const [loading, setLoading] = React.useState(true)
   const load = React.useCallback(async () => {
     const [cls, us] = await Promise.all([
       api<{ items:any[] }>(`/${schoolId}/classes?page=1&limit=200`),
@@ -38,7 +39,7 @@ export default function ClassAttendanceReport() {
   }, [schoolId, classId, studentUserId, status, dateFrom, dateTo, page, limit])
 
   React.useEffect(()=>{ load().catch(()=>{}) },[load])
-  React.useEffect(()=>{ query().catch(()=>{}) },[query])
+  React.useEffect(()=>{ query().then(()=>setLoading(false)).catch(()=>setLoading(false)) },[query])
 
   return (
     <div className="grid" style={{gridTemplateColumns:'1fr'}}>
@@ -71,15 +72,21 @@ export default function ClassAttendanceReport() {
             downloadCSV('presencas.csv', rows)
           }}>Exportar CSV</button>
         </div>
-        <ul className="list">
-          {items.map((a:any)=> (
-            <li key={a.id}>
-              {new Date(a.date).toLocaleDateString()} • {a.status}
-              <div className="muted">Turma: {a.class?.name || a.classId} • Aluno: {a.student?.name || a.studentUserId}</div>
-            </li>
-          ))}
-          {items.length===0 && <li className="muted">Nenhum registro encontrado.</li>}
-        </ul>
+        {!loading ? (
+          <ul className="list">
+            {items.map((a:any)=> (
+              <li key={a.id}>
+                {new Date(a.date).toLocaleDateString()} • {a.status}
+                <div className="muted">Turma: {a.class?.name || a.classId} • Aluno: {a.student?.name || a.studentUserId}</div>
+              </li>
+            ))}
+            {items.length===0 && <li className="muted">Nenhum registro encontrado.</li>}
+          </ul>
+        ) : (
+          <div className="skeleton-list">
+            {Array.from({length:6}).map((_,i)=> <div key={i} className="skeleton-item" />)}
+          </div>
+        )}
       </section>
     </div>
   )

@@ -1,6 +1,7 @@
 import React from 'react'
 import { api, getSchoolId } from '../lib/api'
 import { useToast } from '../components/Toast'
+import { RichTextEditor } from '../components/RichTextEditor'
 
 type ContentType = 'TEXT'|'HTML'|'VIDEO'|'FILE'
 
@@ -16,6 +17,7 @@ export default function LessonsPage() {
   const [limit] = React.useState(20)
   const [role, setRole] = React.useState<string|undefined>(undefined)
 
+  const [loading, setLoading] = React.useState(true)
   const load = React.useCallback(async () => {
     const qs = new URLSearchParams()
     qs.set('page', String(page))
@@ -30,6 +32,7 @@ export default function LessonsPage() {
       api<{ role: string|null }>(`/${schoolId}/profile/me`).catch(()=>({ role:null } as any)),
     ])
     setItems(ls.items); setClasses(cls.items); setSubjects(sub.items); setRole(me.role || undefined)
+    setLoading(false)
   }, [schoolId, classId, subjectId, q, page, limit])
 
   React.useEffect(()=>{ load().catch(()=>{}) },[load])
@@ -55,9 +58,15 @@ export default function LessonsPage() {
           <span className="muted">Página {page}</span>
           <button className="button" onClick={()=> setPage(page+1)}>Próxima</button>
         </div>
-        <ul className="list">
-          {items.map((l:any)=> <LessonItem key={l.id} item={l} role={role} onDeleted={(id)=>setItems(items.filter((x:any)=>x.id!==id))} />)}
-        </ul>
+        {!loading ? (
+          <ul className="list">
+            {items.map((l:any)=> <LessonItem key={l.id} item={l} role={role} onDeleted={(id)=>setItems(items.filter((x:any)=>x.id!==id))} />)}
+          </ul>
+        ) : (
+          <div className="skeleton-list">
+            {Array.from({length:4}).map((_,i)=> <div key={i} className="skeleton-item" />)}
+          </div>
+        )}
       </section>
     </div>
   )
@@ -124,8 +133,14 @@ function CreateLesson({ onCreated }: { onCreated: (x:any)=>void }){
           {subjects.map((s:any)=> <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </div>
-      {(contentType==='TEXT' || contentType==='HTML' || contentType==='VIDEO') && (
-        <textarea className="textarea" placeholder={contentType==='VIDEO'?'URL do vídeo':'Conteúdo'} value={body} onChange={e=>setBody(e.target.value)} required />
+      {(contentType==='TEXT') && (
+        <textarea className="textarea" placeholder={'Conteúdo em texto'} value={body} onChange={e=>setBody(e.target.value)} required />
+      )}
+      {(contentType==='HTML') && (
+        <RichTextEditor value={body} onChange={setBody} placeholder="Conteúdo (HTML)" />
+      )}
+      {(contentType==='VIDEO') && (
+        <input className="input" placeholder="URL do vídeo (YouTube, Vimeo, etc.)" value={body} onChange={e=>setBody(e.target.value)} required />
       )}
       {contentType==='FILE' && (
         <input className="input" type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={e=>setFile(e.target.files?.[0]||null)} required />
