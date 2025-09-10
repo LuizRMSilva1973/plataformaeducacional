@@ -62,13 +62,16 @@ export default function ClassGradesReport() {
           <span className="muted">Página {page}</span>
           <button className="button" onClick={()=> setPage(page+1)}>Próxima</button>
           <button className="button" onClick={()=>{
-            const rows = items.map((g:any)=> ({ id: g.id, gradedAt: g.gradedAt, value: g.value, classId: g.classId, subjectId: g.subjectId, studentUserId: g.studentUserId }))
+            const rows = items.map((g:any)=> ({ id: g.id, gradedAt: g.gradedAt, value: g.value, class: g.class?.name || g.classId, subject: g.subject?.name || g.subjectId, student: g.student?.name || g.studentUserId }))
             downloadCSV('notas.csv', rows)
           }}>Exportar CSV</button>
         </div>
         <ul className="list">
           {items.map((g:any)=> (
-            <li key={g.id}>{new Date(g.gradedAt).toLocaleString()} • {g.value} • aluno {g.studentUserId}</li>
+            <li key={g.id}>
+              {new Date(g.gradedAt).toLocaleString()} • {g.value}
+              <div className="muted">Turma: {g.class?.name || g.classId} • Disciplina: {g.subject?.name || g.subjectId} • Aluno: {g.student?.name || g.studentUserId}</div>
+            </li>
           ))}
           {items.length===0 && <li className="muted">Nenhuma nota encontrada.</li>}
         </ul>

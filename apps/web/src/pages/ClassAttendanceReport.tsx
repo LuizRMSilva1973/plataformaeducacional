@@ -67,13 +67,16 @@ export default function ClassAttendanceReport() {
           <span className="muted">Página {page}</span>
           <button className="button" onClick={()=> setPage(page+1)}>Próxima</button>
           <button className="button" onClick={()=>{
-            const rows = items.map((a:any)=> ({ id: a.id, date: a.date, status: a.status, classId: a.classId, studentUserId: a.studentUserId }))
+            const rows = items.map((a:any)=> ({ id: a.id, date: a.date, status: a.status, class: a.class?.name || a.classId, student: a.student?.name || a.studentUserId }))
             downloadCSV('presencas.csv', rows)
           }}>Exportar CSV</button>
         </div>
         <ul className="list">
           {items.map((a:any)=> (
-            <li key={a.id}>{new Date(a.date).toLocaleDateString()} • {a.status} • aluno {a.studentUserId}</li>
+            <li key={a.id}>
+              {new Date(a.date).toLocaleDateString()} • {a.status}
+              <div className="muted">Turma: {a.class?.name || a.classId} • Aluno: {a.student?.name || a.studentUserId}</div>
+            </li>
           ))}
           {items.length===0 && <li className="muted">Nenhum registro encontrado.</li>}
         </ul>

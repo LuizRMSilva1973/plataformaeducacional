@@ -31,7 +31,21 @@ router.get('/', requireMembership(), async (req, res) => {
   };
   const [total, items] = await Promise.all([
     prisma.attendance.count({ where }),
-    prisma.attendance.findMany({ where, skip: p.skip, take: p.take, orderBy: { date: order ?? 'desc' } })
+    prisma.attendance.findMany({
+      where,
+      skip: p.skip,
+      take: p.take,
+      orderBy: { date: order ?? 'desc' },
+      select: {
+        id: true,
+        date: true,
+        status: true,
+        classId: true,
+        studentUserId: true,
+        class: { select: { id: true, name: true } },
+        student: { select: { id: true, name: true, email: true } },
+      }
+    })
   ]);
   res.json({ items, meta: buildMeta(total, p) });
 });
