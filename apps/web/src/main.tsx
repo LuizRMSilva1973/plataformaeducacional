@@ -16,6 +16,8 @@ import AnnouncementsPage from './pages/AnnouncementsPage';
 import AdminSchoolsPage from './pages/AdminSchoolsPage';
 import EnrollmentsPage from './pages/EnrollmentsPage';
 import TeachingPage from './pages/TeachingPage';
+import AttendancePage from './pages/AttendancePage';
+import GradesPage from './pages/GradesPage';
 import './styles.css';
 
 import ErrorPage from './components/ErrorPage';
@@ -40,6 +42,8 @@ const router = createBrowserRouter([
       { path: 'admin/schools', element: <AdminSchoolsPage /> },
       { path: 'enrollments', element: <EnrollmentsPage /> },
       { path: 'teaching', element: <TeachingPage /> },
+      { path: 'attendance', element: <AttendancePage /> },
+      { path: 'grades', element: <GradesPage /> },
     ],
   },
 ]);
