@@ -72,8 +72,10 @@ export function Layout() {
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/enrollments">Matrículas</NavLink>}
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/teaching">Atribuições</NavLink>}
           {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/assignments">Tarefas</NavLink>}
-          {(isAdmin || role === 'TEACHER') && <NavLink to="/attendance">Presenças</NavLink>}
-          {(isAdmin || role === 'TEACHER') && <NavLink to="/grades">Notas</NavLink>}
+          {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/attendance">Presenças</NavLink>}
+          {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/grades">Notas</NavLink>}
+          {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/reports/attendance">Relatório Presenças</NavLink>}
+          {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/reports/grades">Relatório Notas</NavLink>}
           {(isAdmin || role === 'DIRECTOR' || role === 'TEACHER' || role === 'STUDENT') && <NavLink to="/announcements">Avisos</NavLink>}
           {(isAdmin || role === 'DIRECTOR' || role === 'TEACHER' || role === 'STUDENT') && <NavLink to="/messages">Mensagens</NavLink>}
           {(role === 'STUDENT') && <NavLink to="/me/grades">Minhas Notas</NavLink>}

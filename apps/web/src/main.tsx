@@ -21,6 +21,8 @@ import GradesPage from './pages/GradesPage';
 import MessagesPage from './pages/MessagesPage';
 import MyGradesPage from './pages/MyGradesPage';
 import MyAttendancePage from './pages/MyAttendancePage';
+import ClassAttendanceReport from './pages/ClassAttendanceReport';
+import ClassGradesReport from './pages/ClassGradesReport';
 import './styles.css';
 
 import ErrorPage from './components/ErrorPage';
@@ -50,6 +52,8 @@ const router = createBrowserRouter([
       { path: 'messages', element: <MessagesPage /> },
       { path: 'me/grades', element: <MyGradesPage /> },
       { path: 'me/attendance', element: <MyAttendancePage /> },
+      { path: 'reports/attendance', element: <ClassAttendanceReport /> },
+      { path: 'reports/grades', element: <ClassGradesReport /> },
     ],
   },
 ]);
