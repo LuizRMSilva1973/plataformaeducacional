@@ -36,11 +36,6 @@ router.get('/', requireMembership(), async (req, res) => {
 
   const orderBy = sort === 'email' ? { user: { email: order ?? 'asc' } } : sort === 'role' ? { role: order ?? 'asc' } : { user: { name: order ?? 'asc' } };
 
-  type MembershipUserItem = {
-    user: { id: string; email: string; name: string };
-    role: 'DIRECTOR' | 'TEACHER' | 'STUDENT';
-  };
-
   const total = await prisma.membership.count({ where });
   const memberships = await prisma.membership.findMany({
     where,
@@ -49,6 +44,6 @@ router.get('/', requireMembership(), async (req, res) => {
     skip: p.skip,
     take: p.take,
   });
-  const items = memberships.map((m) => ({ ...m.user, role: m.role }));
+  const items = memberships.map((m: any) => ({ ...m.user, role: m.role }));
   res.json({ items, meta: buildMeta(total, p) });
 });

@@ -7,7 +7,6 @@ function baseLog(level: LogLevel, msg: string, data?: Record<string, unknown>) {
     msg,
     ...(data || {}),
   }
-  // eslint-disable-next-line no-console
   console.log(JSON.stringify(payload))
 }
 
@@ -26,4 +25,3 @@ export function bindRequest(data: Record<string, unknown>) {
     error: (msg: string, extra?: Record<string, unknown>) => logger.error(msg, { ...data, ...(extra || {}) }),
   }
 }
-

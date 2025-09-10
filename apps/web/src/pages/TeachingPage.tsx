@@ -20,7 +20,7 @@ export default function TeachingPage() {
   const [page, setPage] = React.useState(1)
   const [limit] = React.useState(20)
 
-  async function load() {
+  const load = React.useCallback(async () => {
     const qs = new URLSearchParams()
     qs.set('page', String(page))
     qs.set('limit', String(limit))
@@ -37,8 +37,8 @@ export default function TeachingPage() {
     setClasses(cls.items)
     setSubjects(sub.items)
     setTeachers(us.items.map((m:any)=> ({ id: m.id ?? m.user?.id, name: m.name ?? m.user?.name, email: m.email ?? m.user?.email })))
-  }
-  React.useEffect(()=>{ if (schoolId) load().catch(()=>{}) },[schoolId, fTeacher, fClass, fSubject, page, limit])
+  }, [schoolId, fTeacher, fClass, fSubject, page, limit])
+  React.useEffect(()=>{ if (schoolId) load().catch(()=>{}) },[schoolId, load])
   React.useEffect(()=>{
     function onChange(){ const id = getSchoolId(); if (id) setSchoolIdState(id) }
     window.addEventListener('school-change', onChange)
@@ -61,12 +61,7 @@ export default function TeachingPage() {
     } catch(e:any){ show(e?.message||'Erro ao atribuir','error') } finally { setBusy(false) }
   }
 
-  async function remove(id: string) {
-    if (!confirm('Remover atribuição?')) return
-    await api<void>(`/${schoolId}/teaching-assignments/${id}`, { method:'DELETE' })
-    setItems(items.filter(i=>i.id!==id))
-    show('Atribuição removida','success')
-  }
+  // removido: função 'remove' não utilizada (uso consolidado em TeachingItem)
 
   return (
     <div className="grid" style={{gridTemplateColumns:'1fr'}}>

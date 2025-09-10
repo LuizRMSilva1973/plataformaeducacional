@@ -3,7 +3,6 @@ import { api, getSchoolId } from '../lib/api'
 import { useToast } from '../components/Toast'
 import { downloadCSV } from '../lib/export'
 import { useDebouncedValue } from '../lib/hooks'
-import { getSchoolId } from '../lib/api'
 
 export default function AssignmentsPage() {
   const { show } = useToast()
@@ -22,7 +21,7 @@ export default function AssignmentsPage() {
   const [dueAt, setDueAt] = React.useState('')
   const schoolId = getSchoolId() || 'seed-school'
 
-  async function load() {
+  const load = React.useCallback(async () => {
     const qs = new URLSearchParams()
     qs.set('page', String(page))
     qs.set('limit', String(limit))
@@ -36,8 +35,8 @@ export default function AssignmentsPage() {
       api<{ items: any[] }>(`/${schoolId}/subjects?page=1&limit=200`),
     ])
     setItems(a.items); setClasses(c.items); setSubjects(s.items)
-  }
-  React.useEffect(()=>{ load().catch(()=>{}) },[schoolId, classId, subjectId, dq, order, page, limit])
+  }, [schoolId, classId, subjectId, dq, order, page, limit])
+  React.useEffect(()=>{ load().catch(()=>{}) },[load])
 
   function exportCSV(){
     const rows = items.map((a:any)=> ({ id: a.id, title: a.title, dueAt: a.dueAt || '' }))

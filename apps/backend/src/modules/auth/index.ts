@@ -39,7 +39,7 @@ router.post('/dev-register', rateLimit({ windowMs: 60_000, max: 5 }), async (req
   try {
     const user = await prisma.user.create({ data: { name, email, passwordHash: hash, isAdmin: !!isAdmin } });
     return res.status(201).json({ id: user.id, email: user.email, isAdmin: user.isAdmin });
-  } catch (e) {
+  } catch {
     // Em ambiente de desenvolvimento, se o usuário já existir, retornamos o existente
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {

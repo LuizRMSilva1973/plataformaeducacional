@@ -21,7 +21,7 @@ export default function EnrollmentsPage() {
   const [clYear, setClYear] = React.useState<string>('')
   const canSubmit = !!classId && !!studentUserId && !busy
 
-  async function load() {
+  const load = React.useCallback(async () => {
     const [en, cls, us] = await Promise.all([
       api<{ items:any[] }>(`/${schoolId}/enrollments?page=1&limit=100`),
       api<{ items:any[] }>(`/${schoolId}/classes?page=1&limit=100`),
@@ -31,8 +31,8 @@ export default function EnrollmentsPage() {
     setClasses(cls.items)
     // usuários no formato flatten: { id,name,email,role }
     setStudents(us.items.map((m:any)=> ({ id: m.id ?? m.user?.id, name: m.name ?? m.user?.name, email: m.email ?? m.user?.email })))
-  }
-  React.useEffect(()=>{ if (schoolId) load().catch(()=>{}) },[schoolId])
+  }, [schoolId])
+  React.useEffect(()=>{ if (schoolId) load().catch(()=>{}) },[schoolId, load])
   // Recarrega ao voltar a aba para ativo (sincroniza com criações em outras telas)
   React.useEffect(() => {
     function onVis(){ if (document.visibilityState === 'visible' && getSchoolId()) { setSchoolIdState(getSchoolId()!); } }

@@ -72,7 +72,7 @@ router.patch('/:userId', requireMembership('DIRECTOR'), async (req, res) => {
   const schoolId = req.schoolId!;
   const { userId } = req.params as { userId: string };
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx: typeof prisma) => {
     // Ativa/garante o membership no novo papel
     const m = await tx.membership.upsert({
       where: { userId_schoolId_role: { userId, schoolId, role } },

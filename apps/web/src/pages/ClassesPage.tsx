@@ -11,11 +11,11 @@ export default function ClassesPage() {
   const [msg, setMsg] = React.useState('')
   const [schoolId, setSchoolIdState] = React.useState<string>(getSchoolId() || '')
 
-  async function load() {
+  const load = React.useCallback(async () => {
     const r = await api<{ items: any[] }>(`/${schoolId}/classes?page=1&limit=50`)
     setItems(r.items)
-  }
-  React.useEffect(()=>{ if (schoolId) load().catch(()=>{}) },[schoolId])
+  }, [schoolId])
+  React.useEffect(()=>{ if (schoolId) load().catch(()=>{}) },[schoolId, load])
   React.useEffect(()=>{
     function onChange(){ const id = getSchoolId(); if (id) setSchoolIdState(id) }
     window.addEventListener('school-change', onChange)

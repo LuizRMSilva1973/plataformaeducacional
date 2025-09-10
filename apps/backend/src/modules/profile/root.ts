@@ -11,7 +11,6 @@ router.get('/schools', async (req, res) => {
     select: { schoolId: true, school: { select: { id: true, name: true } } },
     distinct: ['schoolId']
   })
-  const items = memberships.map(m => ({ id: m.school.id, name: m.school.name }))
+  const items = memberships.map((m: any) => ({ id: m.school.id, name: m.school.name }))
   res.json({ items, meta: { total: items.length } })
 })
-

@@ -3,7 +3,6 @@ import { api, getSchoolId } from '../lib/api'
 import { useToast } from '../components/Toast'
 import { downloadCSV } from '../lib/export'
 import { useDebouncedValue } from '../lib/hooks'
-import { getSchoolId } from '../lib/api'
 
 export default function AnnouncementsPage() {
   const { show } = useToast()
@@ -20,7 +19,7 @@ export default function AnnouncementsPage() {
   const dq = useDebouncedValue(q, 300)
   const schoolId = getSchoolId() || 'seed-school'
 
-  async function load() {
+  const load = React.useCallback(async () => {
     const qs = new URLSearchParams()
     qs.set('page', String(page))
     qs.set('limit', String(limit))
@@ -32,8 +31,8 @@ export default function AnnouncementsPage() {
       api<{ items:any[] }>(`/${schoolId}/classes?page=1&limit=200`),
     ])
     setItems(an.items); setClasses(cls.items)
-  }
-  React.useEffect(()=>{ load().catch(()=>{}) },[schoolId, dq, classId, order, page, limit])
+  }, [schoolId, dq, classId, order, page, limit])
+  React.useEffect(()=>{ load().catch(()=>{}) },[load])
 
   function exportCSV(){
     const rows = items.map((an:any)=> ({ id: an.id, title: an.title, createdAt: an.createdAt }))

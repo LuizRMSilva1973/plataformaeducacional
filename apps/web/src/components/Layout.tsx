@@ -14,6 +14,18 @@ export function Layout() {
   const [isAdmin, setIsAdmin] = React.useState<boolean>(false)
   const navigate = useNavigate()
 
+  const applySchools = React.useCallback((list: School[]) => {
+    setSchools(list)
+    const current = schoolId
+    const hasCurrent = current && list.some(s => s.id === current)
+    const nextId = hasCurrent ? current : (list[0]?.id || '')
+    if (nextId && nextId !== current) {
+      setSchool(nextId)
+      setSchoolId(nextId)
+      window.dispatchEvent(new CustomEvent('school-change', { detail: nextId }))
+    }
+  }, [schoolId])
+
   React.useEffect(() => {
     if (!token) return
     // Tenta carregar escolas como admin; se 403, carrega escolas do usuário
@@ -27,19 +39,7 @@ export function Layout() {
         // sem escolas — mantém estado atual
       }
     })
-  }, [token])
-
-  function applySchools(list: School[]) {
-    setSchools(list)
-    const current = schoolId
-    const hasCurrent = current && list.some(s => s.id === current)
-    const nextId = hasCurrent ? current : (list[0]?.id || '')
-    if (nextId && nextId !== current) {
-      setSchool(nextId)
-      setSchoolId(nextId)
-      window.dispatchEvent(new CustomEvent('school-change', { detail: nextId }))
-    }
-  }
+  }, [token, applySchools])
 
   React.useEffect(() => {
     if (!token || !schoolId) return

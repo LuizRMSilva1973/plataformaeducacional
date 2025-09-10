@@ -19,7 +19,7 @@ export default function UsersPage() {
   const dq = useDebouncedValue(q, 300)
   const [schoolId, setSchoolIdState] = React.useState<string>(getSchoolId() || '')
 
-  async function load() {
+  const load = React.useCallback(async () => {
     const qs = new URLSearchParams()
     qs.set('page', String(page))
     qs.set('limit', String(limit))
@@ -27,8 +27,8 @@ export default function UsersPage() {
     if (role) qs.set('role', role as any)
     const r = await api<{ items: any[] }>(`/${schoolId}/users?${qs.toString()}`)
     setItems(r.items)
-  }
-  React.useEffect(() => { if (schoolId) load().catch(()=>{}) }, [schoolId, dq, role, page, limit])
+  }, [schoolId, dq, role, page, limit])
+  React.useEffect(() => { if (schoolId) load().catch(()=>{}) }, [schoolId, load])
   React.useEffect(() => {
     function onChange(){ const id = getSchoolId(); if (id) setSchoolIdState(id) }
     window.addEventListener('school-change', onChange)
