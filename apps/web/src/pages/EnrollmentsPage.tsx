@@ -33,6 +33,12 @@ export default function EnrollmentsPage() {
     setStudents(us.items.map((m:any)=> ({ id: m.id ?? m.user?.id, name: m.name ?? m.user?.name, email: m.email ?? m.user?.email })))
   }
   React.useEffect(()=>{ load().catch(()=>{}) },[schoolId])
+  // Recarrega ao voltar a aba para ativo (sincroniza com criações em outras telas)
+  React.useEffect(() => {
+    function onVis(){ if (document.visibilityState === 'visible') load().catch(()=>{}) }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [schoolId])
 
   function exportCSV(){
     const rows = items.map((i:any)=> ({ id: i.id, class: i.class?.name, student: i.student?.name, email: i.student?.email }))
@@ -59,6 +65,7 @@ export default function EnrollmentsPage() {
         <h3>Matrículas</h3>
         <div className="row">
           <button className="button" onClick={exportCSV}>Exportar CSV</button>
+          <button className="button" onClick={()=> load().catch(()=>{})}>Recarregar</button>
           <button className="button" onClick={()=> setCreating(v=>!v)}>{creating ? 'Cancelar' : 'Criar aluno'}</button>
           <button className="button" onClick={()=> setCreatingClass(v=>!v)}>{creatingClass ? 'Cancelar' : 'Criar turma'}</button>
         </div>
