@@ -25,6 +25,13 @@ enum AttendanceStatus {
   LATE
 }
 
+enum ContentType {
+  TEXT
+  HTML
+  VIDEO
+  FILE
+}
+
 model User {
   id        String        @id @default(cuid())
   email     String        @unique
@@ -43,6 +50,7 @@ model User {
   auditLogs  AuditLog[]   @relation("UserAuditLogs")
   messagesSent Message[]  @relation("messagesSent")
   messagesRecv Message[]  @relation("messagesRecv")
+  lessonsCreated Lesson[] @relation("LessonCreatedBy")
 }
 
 model School {
@@ -62,6 +70,7 @@ model School {
   messages   Message[]
   files      StoredFile[]
   auditLogs  AuditLog[]
+  lessons    Lesson[]
 }
 
 model Membership {
@@ -91,6 +100,7 @@ model Class {
   attendances Attendance[]
   announcements Announcement[]
   messages   Message[]
+  lessons    Lesson[]
   @@index([schoolId])
 }
 
@@ -102,6 +112,7 @@ model Subject {
   teachingAssignments TeachingAssignment[]
   assignments Assignment[]
   grades     Grade[]
+  lessons    Lesson[]
   @@index([schoolId])
 }
 
@@ -224,6 +235,7 @@ model StoredFile {
   path      String
   mimeType  String
   createdAt DateTime @default(now())
+  lessons   Lesson[]
   @@index([schoolId])
 }
 
@@ -238,5 +250,26 @@ model AuditLog {
   entityId  String
   meta      Json?
   createdAt DateTime @default(now())
+  @@index([schoolId])
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  school    School   @relation(fields: [schoolId], references: [id])
+  schoolId  String
+  class     Class?   @relation(fields: [classId], references: [id])
+  classId   String?
+  subject   Subject? @relation(fields: [subjectId], references: [id])
+  subjectId String?
+  title     String
+  contentType ContentType
+  body      String?
+  file      StoredFile? @relation(fields: [fileId], references: [id])
+  fileId    String?
+  createdBy User     @relation("LessonCreatedBy", fields: [createdByUserId], references: [id])
+  createdByUserId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  publishedAt DateTime?
   @@index([schoolId])
 }

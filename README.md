@@ -16,6 +16,7 @@ Stack e decisões
 - Autorização: middlewares `requireAdmin` e `requireMembership(role?)` (Admin ignora escopo).
 - Página Web: esqueleto com login/dashboard (exemplo).
 - Logs: correlação por `x-request-id` — frontend envia por requisição e o backend retorna/propaga no cabeçalho e logs estruturados.
+- Conteúdos de aula: professores podem criar conteúdos do tipo Texto, HTML, Vídeo (URL) ou Arquivo (PDF/DOCX) por turma/disciplinas; alunos visualizam por escopo da escola.
 
 ## Servidores (dev)
 - Frontend (Vite): `http://localhost:5173`
@@ -136,6 +137,7 @@ Credenciais de acesso pós-seed:
 **CORS e Variáveis**
 - Backend aceita `CORS_ORIGIN` (padrão dev: `http://localhost:5173`).
 - Frontend usa `VITE_API_URL` (padrão dev: `http://localhost:3000`).
+- Armazenamento de arquivos: `STORAGE_DIR` (padrão: `./uploads`) — diretório local onde os uploads são gravados.
 
 **Banco de Dados**
 - Postgres exposto em `localhost:55432` para ferramentas locais.

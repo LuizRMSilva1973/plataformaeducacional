@@ -23,6 +23,7 @@ import MyGradesPage from './pages/MyGradesPage';
 import MyAttendancePage from './pages/MyAttendancePage';
 import ClassAttendanceReport from './pages/ClassAttendanceReport';
 import ClassGradesReport from './pages/ClassGradesReport';
+import LessonsPage from './pages/LessonsPage';
 import './styles.css';
 
 import ErrorPage from './components/ErrorPage';
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
       { path: 'subjects', element: <SubjectsPage /> },
       { path: 'assignments', element: <AssignmentsPage /> },
       { path: 'announcements', element: <AnnouncementsPage /> },
+      { path: 'lessons', element: <LessonsPage /> },
       { path: 'admin/schools', element: <AdminSchoolsPage /> },
       { path: 'enrollments', element: <EnrollmentsPage /> },
       { path: 'teaching', element: <TeachingPage /> },
