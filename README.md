@@ -73,12 +73,24 @@ Credenciais e Configuração Padrão (dev)
 | --- | --- |
 | ![Tarefas](docs/screenshots/assignments.png) | ![Avisos](docs/screenshots/announcements.png) |
 
+Sugestão de capturas adicionais:
+- `docs/screenshots/lessons.png` — Conteúdos com editor HTML e arquivos
+- `docs/screenshots/messages.png` — Mensagens com filtros e nomes
+- `docs/screenshots/reports-attendance.png` — Relatório de Presenças (com CSV)
+- `docs/screenshots/reports-grades.png` — Relatório de Notas (com CSV)
+
 ## 🧪 Inicialização Rápida (Docker Compose)
 - Requisitos: Docker + Docker Compose instalados.
 - Subir serviços: `docker compose up -d` (sobe db, backend e web)
 - URLs:
   - Backend: `http://localhost:3000/health`
   - Frontend (Vite dev): `http://localhost:5173`
+
+### Smoke test (rápido)
+- Com um único comando: `npm run smoke`
+  - Sobe `db`, `backend` e `web`, aguarda 2s e mostra:
+    - Health do backend
+    - Status HTTP do web (Vite)
 - Autenticação (dev):
   - Email: `admin@local`
   - Senha: `senha`

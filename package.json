@@ -23,7 +23,9 @@
     "db:seed": "npm -w @edu/backend run prisma:seed",
     "db:reset": "bash scripts/db-reset.sh",
     "dev:compose": "docker compose up -d",
-    "dev:compose:down": "docker compose down"
+    "dev:compose:down": "docker compose down",
+    "test:backend:docker": "docker compose exec -T backend npm -w @edu/backend run -s test",
+    "smoke": "sh -c 'docker compose up -d db backend web && sleep 2 && echo BACKEND: $(curl -s http://localhost:3000/health) && echo WEB: $(curl -sI http://localhost:5173 | head -n 1)'"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
