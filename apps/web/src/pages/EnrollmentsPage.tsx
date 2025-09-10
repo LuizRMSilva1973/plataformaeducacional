@@ -16,6 +16,9 @@ export default function EnrollmentsPage() {
   const [cName, setCName] = React.useState('')
   const [cEmail, setCEmail] = React.useState('')
   const [cPass, setCPass] = React.useState('')
+  const [creatingClass, setCreatingClass] = React.useState(false)
+  const [clName, setClName] = React.useState('')
+  const [clYear, setClYear] = React.useState<string>('')
   const canSubmit = !!classId && !!studentUserId && !busy
 
   async function load() {
@@ -57,7 +60,29 @@ export default function EnrollmentsPage() {
         <div className="row">
           <button className="button" onClick={exportCSV}>Exportar CSV</button>
           <button className="button" onClick={()=> setCreating(v=>!v)}>{creating ? 'Cancelar' : 'Criar aluno'}</button>
+          <button className="button" onClick={()=> setCreatingClass(v=>!v)}>{creatingClass ? 'Cancelar' : 'Criar turma'}</button>
         </div>
+        {creatingClass && (
+          <div className="row" style={{gap:8, flexWrap:'wrap', marginTop:8}}>
+            <input className="input" placeholder="Nome da turma" value={clName} onChange={e=>setClName(e.target.value)} />
+            <input className="input" placeholder="Ano (ex.: 2025)" value={clYear} onChange={e=>setClYear(e.target.value.replace(/[^0-9]/g,''))} />
+            <button className="button" disabled={!clName || !clYear || busy} onClick={async ()=>{
+              try {
+                setBusy(true)
+                const payload = { name: clName.trim(), year: Number(clYear) }
+                const cls = await api<any>(`/${schoolId}/classes`, { method:'POST', body: JSON.stringify(payload) })
+                // recarrega classes e pré-seleciona
+                const clsResp = await api<{ items:any[] }>(`/${schoolId}/classes?page=1&limit=100`)
+                setClasses(clsResp.items)
+                setClassId(cls.id)
+                setClName(''); setClYear(''); setCreatingClass(false)
+                show('Turma criada', 'success')
+              } catch(e:any) {
+                show(e?.message || 'Erro ao criar turma','error')
+              } finally { setBusy(false) }
+            }}>Salvar turma</button>
+          </div>
+        )}
         {creating && (
           <div className="row" style={{gap:8, flexWrap:'wrap', marginTop:8}}>
             <input className="input" placeholder="Nome do aluno" value={cName} onChange={e=>setCName(e.target.value)} />
