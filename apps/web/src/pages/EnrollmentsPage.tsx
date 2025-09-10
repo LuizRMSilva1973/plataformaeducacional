@@ -12,6 +12,7 @@ export default function EnrollmentsPage() {
   const [classId, setClassId] = React.useState('')
   const [studentUserId, setStudentUserId] = React.useState('')
   const [busy, setBusy] = React.useState(false)
+  const canSubmit = !!classId && !!studentUserId && !busy
 
   async function load() {
     const [en, cls, us] = await Promise.all([
@@ -33,6 +34,7 @@ export default function EnrollmentsPage() {
 
   async function create(e: React.FormEvent) {
     e.preventDefault()
+    if (!classId || !studentUserId) return
     setBusy(true)
     try {
       const item = await api<any>(`/${schoolId}/enrollments`, { method:'POST', body: JSON.stringify({ classId, studentUserId }) })
@@ -59,10 +61,20 @@ export default function EnrollmentsPage() {
             </select>
             <select className="select" value={studentUserId} onChange={e=>setStudentUserId(e.target.value)} required>
               <option value="">Aluno</option>
-              {students.map((s:any)=> <option key={s.id} value={s.id}>{s.name} &lt;{s.email}&gt;</option>)}
+              {students.length === 0 ? (
+                <option value="" disabled>Nenhum aluno disponível — crie em Usuários</option>
+              ) : (
+                students.map((s:any)=> <option key={s.id} value={s.id}>{s.name} &lt;{s.email}&gt;</option>)
+              )}
             </select>
-            <button className="button primary" disabled={busy}>Matricular</button>
+            <button className="button primary" disabled={!canSubmit}>{busy ? 'Matriculando...' : 'Matricular'}</button>
           </div>
+          {(classes.length === 0) && (
+            <div className="muted">Nenhuma turma encontrada. Crie uma em “Turmas”.</div>
+          )}
+          {(students.length === 0) && (
+            <div className="muted">Nenhum aluno listado. Vá em “Usuários” para criar e vinculá-lo com papel Aluno.</div>
+          )}
         </form>
         <ul className="list">
           {items.map((i:any)=> (
