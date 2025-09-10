@@ -1,8 +1,12 @@
-# Plataforma Educacional — Monorepo
+# 🌟 Plataforma Educacional — Monorepo
+
+Uma plataforma moderna, multi‑escola e responsiva para gestão pedagógica, com papéis de Admin, Diretor, Professor e Aluno. UI caprichada com tema claro/escuro, navegação com ícones, toasts com requestId e skeleton loaders para uma experiência fluida.
+
+![Status](https://img.shields.io/badge/status-active-brightgreen) ![Node](https://img.shields.io/badge/node-20.x-339933?logo=node.js) ![TypeScript](https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript) ![Express](https://img.shields.io/badge/api-Express-000000?logo=express) ![React](https://img.shields.io/badge/web-React-61DAFB?logo=react) ![Prisma](https://img.shields.io/badge/orm-Prisma-2D3748?logo=prisma) ![Docker](https://img.shields.io/badge/dev-Docker-2496ED?logo=docker)
 
 Sistema multi‑escola com papéis Admin (global), Diretor, Professor e Aluno — todos os dados de diretoria, professores e alunos ficam sempre vinculados a uma escola específica via `school_id`.
 
-Componentes principais
+## 🚀 Componentes principais
 - apps/backend: API Node.js (Express + Prisma + PostgreSQL)
 - apps/web: SPA React + Vite
 - packages/ui: componentes React compartilhados
@@ -10,7 +14,7 @@ Componentes principais
 - infra: docker-compose (Postgres, Backend, Web)
 - docs: rotas e exemplos de chamadas
 
-Stack e decisões
+## 🧠 Stack e decisões
 - Banco: PostgreSQL com Prisma ORM; índices por `school_id` em todos os recursos escopados.
 - Autenticação: JWT; admin global; memberships por escola com papéis `DIRECTOR|TEACHER|STUDENT`.
 - Autorização: middlewares `requireAdmin` e `requireMembership(role?)` (Admin ignora escopo).
@@ -18,11 +22,11 @@ Stack e decisões
 - Logs: correlação por `x-request-id` — frontend envia por requisição e o backend retorna/propaga no cabeçalho e logs estruturados.
 - Conteúdos de aula: professores podem criar conteúdos do tipo Texto, HTML, Vídeo (URL) ou Arquivo (PDF/DOCX) por turma/disciplinas; alunos visualizam por escopo da escola.
 
-## Servidores (dev)
+## 💻 Servidores (dev)
 - Frontend (Vite): `http://localhost:5173`
 - Backend (API): `http://localhost:3000`
 
-Como iniciar rapidamente:
+### Início rápido
 - Docker Compose (recomendado): `docker compose up -d db backend web`
 - Apenas backend com Docker: `docker compose up -d db backend`
 - NPM workspaces (sem Docker):
@@ -53,7 +57,7 @@ Credenciais e Configuração Padrão (dev)
   - `ADMIN_EMAIL=admin@local`
   - `ADMIN_PASSWORD=senha`
 
-## Screenshots
+## 🖼️ Screenshots
 
 > Imagens de exemplo da interface (adicione os arquivos em `docs/screenshots/`):
 
@@ -69,7 +73,7 @@ Credenciais e Configuração Padrão (dev)
 | --- | --- |
 | ![Tarefas](docs/screenshots/assignments.png) | ![Avisos](docs/screenshots/announcements.png) |
 
-## Inicialização Rápida (Docker Compose)
+## 🧪 Inicialização Rápida (Docker Compose)
 - Requisitos: Docker + Docker Compose instalados.
 - Subir serviços: `docker compose up -d` (sobe db, backend e web)
 - URLs:
@@ -80,7 +84,7 @@ Credenciais e Configuração Padrão (dev)
   - Senha: `senha`
   - Ajustável em `docker-compose.yml` (`ADMIN_EMAIL`, `ADMIN_PASSWORD`, `JWT_SECRET`).
 
-### Resetar o banco de dados
+### 🧹 Resetar o banco de dados
 
 Use o script abaixo para recriar o banco do zero, aplicar as migrações e executar o seed padrão.
 
@@ -97,7 +101,7 @@ Credenciais de acesso pós-seed:
 - Professor: `professor@local` / `secret`
 - Aluno: `aluno@local` / `secret`
 
-**Inicialização Local (Sem Docker)**
+## 🛠️ Inicialização Local (Sem Docker)
 - Backend:
   - `cp apps/backend/.env.example apps/backend/.env`
   - Ajuste `DATABASE_URL` se necessário (Postgres local)
@@ -110,7 +114,7 @@ Credenciais de acesso pós-seed:
   - Acesse `http://localhost:5173`
 - Teste rápido: `curl http://localhost:3000/health` → `{ "ok": true }`
 
-**Modo Dev com Hot Reload (Docker Compose)**
+## 🔁 Modo Dev com Hot Reload (Docker Compose)
 - O Compose está configurado com bind mounts para desenvolvimento:
   - Backend: mapeia `apps/backend/src` e `apps/backend/prisma` (hot reload via `tsx watch`).
   - Frontend: mapeia `apps/web`, `packages/ui` e `packages/config` (Vite com `CHOKIDAR_USEPOLLING=true`).
@@ -121,7 +125,7 @@ Credenciais de acesso pós-seed:
   - Ver logs: `npm run dev:logs`
 - Se o navegador mostrar interface antiga, use hard refresh (Ctrl+F5) ou janela anônima.
 
-**Frontend (UI) — Navegação**
+## 🧭 Frontend (UI) — Navegação
 - Login: `http://localhost:5173/login` (redireciona ao painel após sucesso)
 - Painel com layout moderno (sidebar + topbar com seleção de escola):
   - Dashboard por papel (Admin/Diretor/Professor/Aluno) com atalhos relevantes
@@ -134,17 +138,17 @@ Credenciais de acesso pós-seed:
   - Avisos: criar (título, conteúdo, turma opcional), editar (inline) e excluir
 - O token é persistido no `localStorage`. A escola selecionada também.
 
-**CORS e Variáveis**
+## ⚙️ CORS e Variáveis
 - Backend aceita `CORS_ORIGIN` (padrão dev: `http://localhost:5173`).
 - Frontend usa `VITE_API_URL` (padrão dev: `http://localhost:3000`).
 - Armazenamento de arquivos: `STORAGE_DIR` (padrão: `./uploads`) — diretório local onde os uploads são gravados.
 
-**Banco de Dados**
+## 🗄️ Banco de Dados
 - Postgres exposto em `localhost:55432` para ferramentas locais.
 - Migrations: `npm run db:deploy`
 - Seed: `npm run db:seed`
 
-**Scripts Úteis (raiz)**
+## 📜 Scripts Úteis (raiz)
 - `dev:backend`: inicia o backend em modo dev.
 - `dev:web`: inicia o web em modo dev (Vite).
 - `db:generate`: Prisma generate (backend).
@@ -156,7 +160,7 @@ Credenciais de acesso pós-seed:
 - `lint`: ESLint v9 (flat config) em todos os pacotes.
 - `typecheck`: TypeScript em backend, web e ui.
 
-**Solução de Problemas**
+## 🧯 Solução de Problemas
 - Frontend não atualiza (UI antiga):
   - Hard refresh (Ctrl+F5) ou aba anônima; verifique `npm run web:restart` e que os bind mounts estão ativos.
   - Confirme `VITE_API_URL` e CORS (`CORS_ORIGIN`) apontando para `http://localhost:3000` e `http://localhost:5173`.
@@ -169,7 +173,7 @@ Credenciais de acesso pós-seed:
 - 401/403 nas rotas escopadas:
   - Garanta que está enviando `Authorization: Bearer <token>` e usando um `schoolId` válido (ex.: `seed-school`).
 
-**Estrutura do Monorepo**
+## 🗂️ Estrutura do Monorepo
 - `apps/backend`: API Express + Prisma (PostgreSQL)
 - `apps/web`: SPA React (Vite) com layout, rotas protegidas e páginas de CRUD básico
 - `packages/ui`: componentes React compartilhados
@@ -177,7 +181,7 @@ Credenciais de acesso pós-seed:
 - `infra`: serviços auxiliares (ex.: docker-compose com Postgres, Redis, MinIO)
 - `docs`: rotas e exemplos HTTP (veja `docs/API.http`)
 
-**Exemplos de API (cURL)**
+## 📡 Exemplos de API (cURL)
 - Healthcheck (sem auth):
   - `curl http://localhost:3000/health`
 
@@ -248,58 +252,58 @@ Como executar (local)
 3) Frontend: `cd apps/web && npm run dev`
 4) Testar rotas: veja `docs/API.http`
 
-Fluxo básico
+## 🔄 Fluxo básico
 1) Login com admin (`admin@local`/`senha`) em `POST /auth/login` → token JWT
 2) Criar escola em `POST /admin/schools` (Bearer)
 3) Criar usuários (`/auth/dev-register`) e vincular a escolas com `POST /:schoolId/members`
 4) Diretor cria turmas/disciplinas; professores recebem atribuições; alunos são matriculados
 5) Professores criam tarefas; alunos enviam; professores avaliam; presenças registradas
 
-Modelos de dados (núcleo)
+## 🧩 Modelos de dados (núcleo)
 - `schools`, `users (isAdmin, passwordHash)`, `memberships (role, status)`
 - `classes`, `subjects`, `teaching_assignments`, `enrollments`
 - `assignments`, `submissions`, `grades`, `attendance`
 - `announcements`, `messages`, `stored_files`, `audit_logs`
 
-Paginação, filtros e ordenação
+## 🔎 Paginação, filtros e ordenação
 - Todas as listagens aceitam `page`, `limit` e parâmetros de filtro (veja `docs/ROUTES.md`).
 - Respostas trazem `meta: { page, limit, total, pages }`.
 
-Segurança
+## 🔐 Segurança
 - Autorização por middleware; Admin tem acesso global; validação de membership ativa por escola.
 - Validação de inputs com Zod (payloads e query params de listagem).
 
-Testes (backend)
+## ✅ Testes (backend)
 - Pré‑requisitos: Postgres rodando e migrações aplicadas
 - Rodar: `npm -w @edu/backend run test`
 
-Lint e Typecheck
+## 🧹 Lint e Typecheck
 - Lint: `npm run lint`
 - Typecheck: `npm run typecheck`
 
-CI (GitHub Actions)
+## ⚙️ CI (GitHub Actions)
 - Workflow `.github/workflows/ci.yml`:
   - Job `lint-typecheck`: executa ESLint e typecheck em todos os pacotes
   - Job `backend-tests`: sobe Postgres, aplica schema Prisma e roda testes
 
-Pastas
+## 🗃️ Pastas
 - `apps/backend/src` — API, módulos por domínio e middlewares
 - `apps/web/src` — páginas e router
 - `packages/ui/src` — componentes compartilhados
 - `infra/docker-compose.yml` — Postgres/Redis/MinIO
 
-Exemplos de rotas
+## 📚 Exemplos de rotas
 - `docs/ROUTES.md` (parâmetros de cada endpoint)
 - `docs/API.http` (requisições prontas)
 
-Testes (backend)
+## 🧪 Testes (backend)
 - Pré-requisitos: Postgres em execução e migrações aplicadas (veja acima)
 - Rodar testes: `npm -w @edu/backend run test`
 
-Credenciais padrão (dev)
+## 🔑 Credenciais padrão (dev)
 - Admin: `admin@local` / `senha`
   - Pode ser alterado por env: `ADMIN_EMAIL`, `ADMIN_PASSWORD`
-## Contribuição
+## 🤝 Contribuição
 
 Obrigado por contribuir! Siga as orientações abaixo para manter a qualidade do projeto.
 
@@ -331,7 +335,24 @@ Obrigado por contribuir! Siga as orientações abaixo para manter a qualidade do
 - Aguarde aprovação de pelo menos um revisor.
 - Squash & Merge recomendado, mantendo título de commit no padrão convencional.
 
-## Roadmap
+## 🗺️ Roadmap
+
+## ✨ Destaques de UI/UX
+- Tema claro/escuro com persistência e troca rápida
+- Navegação com ícones e estados ativos elegantes
+- Skeleton loaders (listas) e spinners nos botões
+- Editor rich text para conteúdos HTML
+- Toasts com requestId e botão de copiar
+
+## 🧭 Guia Rápido — Tour
+1) Faça login com Admin e crie uma Escola (Admin → Escolas)
+2) Crie Usuários e vincule papéis por escola (Diretor)
+3) Cadastre Turmas e Disciplinas (Diretor)
+4) Atribuições (Prof ↔ Turma/Disciplina) e Matrículas (Aluno ↔ Turma)
+5) Professores: crie Tarefas, registre Presenças/Notas, publique Conteúdos
+6) Alunos: enviem entregas e consultem Minhas Notas/Presenças
+
+> Dica: cada requisição exibe `x-request-id` nos logs do backend; em erros, copie o requestId no toast para depurar.
 
 - UI: edição/remoção de itens (turmas, disciplinas, tarefas, avisos)
 - UI: matrículas e atribuições (aluno↔turma, professor↔turma/disciplinas)
