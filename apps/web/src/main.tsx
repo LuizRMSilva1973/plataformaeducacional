@@ -18,6 +18,9 @@ import EnrollmentsPage from './pages/EnrollmentsPage';
 import TeachingPage from './pages/TeachingPage';
 import AttendancePage from './pages/AttendancePage';
 import GradesPage from './pages/GradesPage';
+import MessagesPage from './pages/MessagesPage';
+import MyGradesPage from './pages/MyGradesPage';
+import MyAttendancePage from './pages/MyAttendancePage';
 import './styles.css';
 
 import ErrorPage from './components/ErrorPage';
@@ -44,6 +47,9 @@ const router = createBrowserRouter([
       { path: 'teaching', element: <TeachingPage /> },
       { path: 'attendance', element: <AttendancePage /> },
       { path: 'grades', element: <GradesPage /> },
+      { path: 'messages', element: <MessagesPage /> },
+      { path: 'me/grades', element: <MyGradesPage /> },
+      { path: 'me/attendance', element: <MyAttendancePage /> },
     ],
   },
 ]);
