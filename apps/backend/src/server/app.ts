@@ -3,6 +3,7 @@ import cors from 'cors';
 import { router as adminRouter } from '../modules/admin/index.js';
 import { router as authRouter } from '../modules/auth/index.js';
 import { router as scopedRouter } from '../server/scoped.js';
+import { router as profileRootRouter } from '../modules/profile/root.js';
 import { prisma } from '../lib/prisma.js';
 import { errorHandler } from './errors.js';
 import { requestId } from '../middleware/requestId.js';
@@ -42,6 +43,8 @@ export function createServer() {
   });
 
   app.use('/auth', authRouter);
+  // Rotas de perfil sem escopo de escola (ex.: lista escolas do usuário)
+  app.use('/profile', ensureAuthenticated, profileRootRouter);
   app.use('/admin', ensureAuthenticated, adminRouter);
   app.use('/', ensureAuthenticated, scopedRouter);
 

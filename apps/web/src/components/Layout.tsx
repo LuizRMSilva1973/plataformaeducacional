@@ -16,20 +16,30 @@ export function Layout() {
 
   React.useEffect(() => {
     if (!token) return
+    // Tenta carregar escolas como admin; se 403, carrega escolas do usuário
     api<{ items: School[] }>(`/admin/schools?page=1&limit=50`).then((r) => {
-      setSchools(r.items)
-      if (!schoolId) {
-        const id = r.items[0]?.id || ''
-        if (id) {
-          setSchool(id)
-          setSchoolId(id)
-          window.dispatchEvent(new CustomEvent('school-change', { detail: id }))
-        }
+      applySchools(r.items)
+    }).catch(async () => {
+      try {
+        const r = await api<{ items: School[] }>(`/profile/schools`)
+        applySchools(r.items)
+      } catch {
+        // sem escolas — mantém estado atual
       }
-    }).catch(() => {
-      // Mantém seleção atual se houver; evita fallback fictício
     })
   }, [token])
+
+  function applySchools(list: School[]) {
+    setSchools(list)
+    const current = schoolId
+    const hasCurrent = current && list.some(s => s.id === current)
+    const nextId = hasCurrent ? current : (list[0]?.id || '')
+    if (nextId && nextId !== current) {
+      setSchool(nextId)
+      setSchoolId(nextId)
+      window.dispatchEvent(new CustomEvent('school-change', { detail: nextId }))
+    }
+  }
 
   React.useEffect(() => {
     if (!token || !schoolId) return
