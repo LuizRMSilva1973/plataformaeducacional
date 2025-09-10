@@ -9,6 +9,7 @@ export default function SubjectsPage() {
   const [name, setName] = React.useState('')
   const [msg, setMsg] = React.useState('')
   const [schoolId, setSchoolIdState] = React.useState<string>(getSchoolId() || '')
+  const [busy, setBusy] = React.useState(false)
 
   const load = React.useCallback(async () => {
     const r = await api<{ items: any[] }>(`/${schoolId}/subjects?page=1&limit=50`)
@@ -24,12 +25,13 @@ export default function SubjectsPage() {
   async function create(e: React.FormEvent) {
     e.preventDefault()
     try {
+      setBusy(true)
       const s = await api<any>(`/${schoolId}/subjects`, { method:'POST', body: JSON.stringify({ name }) })
       setItems([s, ...items])
       setName('')
       setMsg('')
       show('Disciplina criada','success')
-    } catch(e:any) { setMsg(e?.message||'Erro'); show('Erro ao criar disciplina','error') }
+    } catch(e:any) { setMsg(e?.message||'Erro'); show('Erro ao criar disciplina','error') } finally { setBusy(false) }
   }
 
   return (
@@ -39,7 +41,7 @@ export default function SubjectsPage() {
         <form className="form" onSubmit={create}>
           <div className="row">
             <input className="input" placeholder="Nome" value={name} onChange={e=>setName(e.target.value)} required />
-            <button className="button primary" type="submit">Criar</button>
+            <button className={`button primary${busy?' loading':''}`} disabled={busy} type="submit">Criar</button>
           </div>
           {msg && <span className="muted">{msg}</span>}
         </form>
@@ -57,14 +59,20 @@ function SubjectItem({ item, onDeleted, onUpdated }: { item:any, onDeleted:(id:s
   const [name, setName] = React.useState(item.name)
   async function save(){
     const schoolId = getSchoolId() || 'seed-school'
-    const u = await api<any>(`/${schoolId}/subjects/${item.id}`, { method:'PATCH', body: JSON.stringify({ name }) })
-    onUpdated(u); setEdit(false); show('Disciplina atualizada','success')
+    const btn = document.activeElement as HTMLButtonElement | null
+    try { if (btn) btn.classList.add('loading')
+      const u = await api<any>(`/${schoolId}/subjects/${item.id}`, { method:'PATCH', body: JSON.stringify({ name }) })
+      onUpdated(u); setEdit(false); show('Disciplina atualizada','success')
+    } finally { if (btn) btn?.classList.remove('loading') }
   }
   async function del(){
     if(!confirm('Excluir disciplina?')) return
     const schoolId = getSchoolId() || 'seed-school'
-    await api<void>(`/${schoolId}/subjects/${item.id}`, { method:'DELETE' })
-    onDeleted(item.id); show('Disciplina excluída','success')
+    const btn = document.activeElement as HTMLButtonElement | null
+    try { if (btn) btn.classList.add('loading')
+      await api<void>(`/${schoolId}/subjects/${item.id}`, { method:'DELETE' })
+      onDeleted(item.id); show('Disciplina excluída','success')
+    } finally { if (btn) btn?.classList.remove('loading') }
   }
   return (
     <li>

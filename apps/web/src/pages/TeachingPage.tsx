@@ -103,7 +103,7 @@ export default function TeachingPage() {
               <option value="">Disciplina</option>
               {subjects.map((s:any)=> <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
-            <button className="button primary" disabled={busy}>Atribuir</button>
+            <button className={`button primary${busy?' loading':''}`} disabled={busy}>Atribuir</button>
           </div>
         </form>
         <ul className="list">
@@ -124,14 +124,20 @@ function TeachingItem({ item, classes, subjects, teachers, onRemoved, onUpdated 
   const [subjectId, setSubjectId] = React.useState(item.subjectId)
   async function save(){
     const schoolId = getSchoolId() || 'seed-school'
-    const u = await api<any>(`/${schoolId}/teaching-assignments/${item.id}`, { method:'PATCH', body: JSON.stringify({ teacherUserId, classId, subjectId }) })
-    onUpdated(u); setEdit(false); show('Atribuição atualizada','success')
+    const btn = document.activeElement as HTMLButtonElement | null
+    try { if (btn) btn.classList.add('loading')
+      const u = await api<any>(`/${schoolId}/teaching-assignments/${item.id}`, { method:'PATCH', body: JSON.stringify({ teacherUserId, classId, subjectId }) })
+      onUpdated(u); setEdit(false); show('Atribuição atualizada','success')
+    } finally { if (btn) btn?.classList.remove('loading') }
   }
   async function del(){
     if(!confirm('Remover atribuição?')) return
     const schoolId = getSchoolId() || 'seed-school'
-    await api<void>(`/${schoolId}/teaching-assignments/${item.id}`, { method:'DELETE' })
-    onRemoved(item.id); show('Atribuição removida','success')
+    const btn = document.activeElement as HTMLButtonElement | null
+    try { if (btn) btn.classList.add('loading')
+      await api<void>(`/${schoolId}/teaching-assignments/${item.id}`, { method:'DELETE' })
+      onRemoved(item.id); show('Atribuição removida','success')
+    } finally { if (btn) btn?.classList.remove('loading') }
   }
   return (
     <li>

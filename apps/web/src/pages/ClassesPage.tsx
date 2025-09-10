@@ -9,6 +9,7 @@ export default function ClassesPage() {
   const [name, setName] = React.useState('')
   const [year, setYear] = React.useState<number>(new Date().getFullYear())
   const [msg, setMsg] = React.useState('')
+  const [busy, setBusy] = React.useState(false)
   const [schoolId, setSchoolIdState] = React.useState<string>(getSchoolId() || '')
 
   const load = React.useCallback(async () => {
@@ -25,13 +26,14 @@ export default function ClassesPage() {
   async function create(e: React.FormEvent) {
     e.preventDefault()
     try {
+      setBusy(true)
       const c = await api<any>(`/${schoolId}/classes`, { method:'POST', body: JSON.stringify({ name, year }) })
       setItems([c, ...items])
       setName('')
       setYear(new Date().getFullYear())
       setMsg('')
       show('Turma criada','success')
-    } catch(e:any) { setMsg(e?.message||'Erro'); show('Erro ao criar turma','error') }
+    } catch(e:any) { setMsg(e?.message||'Erro'); show('Erro ao criar turma','error') } finally { setBusy(false) }
   }
 
   return (
@@ -42,7 +44,7 @@ export default function ClassesPage() {
           <div className="row">
             <input className="input" placeholder="Nome" value={name} onChange={e=>setName(e.target.value)} required />
             <input className="input" type="number" value={year} onChange={e=>setYear(parseInt(e.target.value||'0'))} required />
-            <button className="button primary" type="submit">Criar</button>
+            <button className={`button primary${busy?' loading':''}`} disabled={busy} type="submit">Criar</button>
           </div>
           {msg && <span className="muted">{msg}</span>}
         </form>
@@ -61,14 +63,20 @@ function ClassItem({ item, onDeleted, onUpdated }: { item:any, onDeleted:(id:str
   const [year, setYear] = React.useState(item.year)
   async function save(){
     const schoolId = getSchoolId() || 'seed-school'
-    const u = await api<any>(`/${schoolId}/classes/${item.id}`, { method:'PATCH', body: JSON.stringify({ name, year }) })
-    onUpdated(u); setEdit(false); show('Turma atualizada','success')
+    const btn = document.activeElement as HTMLButtonElement | null
+    try { if (btn) btn.classList.add('loading')
+      const u = await api<any>(`/${schoolId}/classes/${item.id}`, { method:'PATCH', body: JSON.stringify({ name, year }) })
+      onUpdated(u); setEdit(false); show('Turma atualizada','success')
+    } finally { if (btn) btn.classList.remove('loading') }
   }
   async function del(){
     if(!confirm('Excluir turma?')) return
     const schoolId = getSchoolId() || 'seed-school'
-    await api<void>(`/${schoolId}/classes/${item.id}`, { method:'DELETE' })
-    onDeleted(item.id); show('Turma excluída','success')
+    const btn = document.activeElement as HTMLButtonElement | null
+    try { if (btn) btn.classList.add('loading')
+      await api<void>(`/${schoolId}/classes/${item.id}`, { method:'DELETE' })
+      onDeleted(item.id); show('Turma excluída','success')
+    } finally { if (btn) btn.classList.remove('loading') }
   }
   return (
     <li>

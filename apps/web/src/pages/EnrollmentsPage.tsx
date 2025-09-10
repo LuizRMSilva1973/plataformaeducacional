@@ -138,7 +138,7 @@ export default function EnrollmentsPage() {
                 students.map((s:any)=> <option key={s.id} value={s.id}>{s.name} &lt;{s.email}&gt;</option>)
               )}
             </select>
-            <button className="button primary" disabled={!canSubmit}>{busy ? 'Matriculando...' : 'Matricular'}</button>
+            <button className={`button primary${busy?' loading':''}`} disabled={!canSubmit}>{busy ? 'Matriculando...' : 'Matricular'}</button>
           </div>
           {(classes.length === 0) && (
             <div className="muted">Nenhuma turma encontrada. Crie uma em “Turmas”.</div>
@@ -166,14 +166,20 @@ function EnrollmentItem({ item, classes, students, onRemoved, onUpdated }: { ite
   const [studentUserId, setStudentUserId] = React.useState(item.studentUserId)
   async function save(){
     const schoolId = getSchoolId() || 'seed-school'
-    const u = await api<any>(`/${schoolId}/enrollments/${item.id}`, { method:'PATCH', body: JSON.stringify({ classId, studentUserId }) })
-    onUpdated(u); setEdit(false); show('Matrícula atualizada','success')
+    const btn = document.activeElement as HTMLButtonElement | null
+    try { if (btn) btn.classList.add('loading')
+      const u = await api<any>(`/${schoolId}/enrollments/${item.id}`, { method:'PATCH', body: JSON.stringify({ classId, studentUserId }) })
+      onUpdated(u); setEdit(false); show('Matrícula atualizada','success')
+    } finally { if (btn) btn?.classList.remove('loading') }
   }
   async function del(){
     if(!confirm('Remover matrícula?')) return
     const schoolId = getSchoolId() || 'seed-school'
-    await api<void>(`/${schoolId}/enrollments/${item.id}`, { method:'DELETE' })
-    onRemoved(item.id); show('Matrícula removida','success')
+    const btn = document.activeElement as HTMLButtonElement | null
+    try { if (btn) btn.classList.add('loading')
+      await api<void>(`/${schoolId}/enrollments/${item.id}`, { method:'DELETE' })
+      onRemoved(item.id); show('Matrícula removida','success')
+    } finally { if (btn) btn?.classList.remove('loading') }
   }
   return (
     <li>

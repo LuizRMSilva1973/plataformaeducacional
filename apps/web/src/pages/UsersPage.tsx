@@ -15,6 +15,7 @@ export default function UsersPage() {
   const [cEmail, setCEmail] = React.useState('')
   const [cPass, setCPass] = React.useState('')
   const [cRole, setCRole] = React.useState<'DIRECTOR'|'TEACHER'|'STUDENT'>('STUDENT')
+  const [cBusy, setCBusy] = React.useState(false)
   const [error, setError] = React.useState<string>('')
   const dq = useDebouncedValue(q, 300)
   const [schoolId, setSchoolIdState] = React.useState<string>(getSchoolId() || '')
@@ -71,8 +72,9 @@ export default function UsersPage() {
               <option value="TEACHER">Professor</option>
               <option value="STUDENT">Aluno</option>
             </select>
-            <button className="button" disabled={!cName || !cEmail || !cPass} onClick={async ()=>{
+            <button className={`button${cBusy?' loading':''}`} disabled={!cName || !cEmail || !cPass || cBusy} onClick={async ()=>{
               setError('')
+              setCBusy(true)
               try {
                 // 1) cria o usuário (rota de desenvolvimento)
                 const u = await api<{ id: string }>(`/auth/dev-register`, {
@@ -89,7 +91,7 @@ export default function UsersPage() {
                 await load()
               } catch (e:any) {
                 setError(e?.message || 'Falha ao criar usuário')
-              }
+              } finally { setCBusy(false) }
             }}>Salvar</button>
           </div>
         )}
@@ -128,15 +130,17 @@ export default function UsersPage() {
                   <option value="TEACHER">Professor</option>
                   <option value="STUDENT">Aluno</option>
                 </select>
-                <button className="button" onClick={async ()=>{
+                <button className="button" onClick={async (ev)=>{
                   if (!confirm('Remover vínculo deste usuário com a escola?')) return
                   try {
                     setError('')
+                    const btn = ev.currentTarget as HTMLButtonElement
+                    btn.classList.add('loading'); btn.disabled = true
                     await api(`/${schoolId}/members/${id}`, { method: 'DELETE' })
                     await load()
                   } catch (err:any) {
                     setError(err?.message || 'Falha ao remover')
-                  }
+                  } finally { const btn = ev.currentTarget as HTMLButtonElement; btn.classList.remove('loading'); btn.disabled = false }
                 }}>Remover</button>
               </li>
             )

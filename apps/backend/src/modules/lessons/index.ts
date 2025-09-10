@@ -6,6 +6,20 @@ import { z } from 'zod'
 
 export const router = Router()
 
+function sanitizeHtml(html: string): string {
+  try {
+    let out = html
+    // remove script/style blocks
+    out = out.replace(/<\/(?:script|style)>/gi, '</removed>')
+    out = out.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
+    // remove on* event handlers
+    out = out.replace(/\son[a-z]+\s*=\s*(["']).*?\1/gi, '')
+    // neutralize javascript: in href/src
+    out = out.replace(/\s(href|src)\s*=\s*(["'])\s*javascript:[\s\S]*?\2/gi, ' $1="#"')
+    return out
+  } catch { return html }
+}
+
 router.get('/', requireMembership(), async (req, res) => {
   const schema = z.object({
     page: z.coerce.number().int().min(1).optional(),
@@ -59,7 +73,11 @@ router.post('/', requireMembership('TEACHER'), async (req, res) => {
     const file = await prisma.storedFile.findFirst({ where: { id: data.fileId, schoolId } })
     if (!file) return res.status(404).json({ error: 'Arquivo não pertence à escola' })
   }
-  const lesson = await prisma.lesson.create({ data: { ...data, schoolId, createdByUserId: req.user!.id } })
+  const finalData = { ...data } as any
+  if (finalData.contentType === 'HTML' && typeof finalData.body === 'string') {
+    finalData.body = sanitizeHtml(finalData.body)
+  }
+  const lesson = await prisma.lesson.create({ data: { ...finalData, schoolId, createdByUserId: req.user!.id } })
   res.status(201).json(lesson)
 })
 
@@ -84,7 +102,11 @@ router.patch('/:id', requireMembership('TEACHER'), async (req, res) => {
     const file = await prisma.storedFile.findFirst({ where: { id: parsed.data.fileId, schoolId } })
     if (!file) return res.status(404).json({ error: 'Arquivo não pertence à escola' })
   }
-  const lesson = await prisma.lesson.update({ where: { id }, data: parsed.data })
+  const patch = { ...parsed.data } as any
+  if (patch.contentType === 'HTML' && typeof patch.body === 'string') {
+    patch.body = sanitizeHtml(patch.body)
+  }
+  const lesson = await prisma.lesson.update({ where: { id }, data: patch })
   res.json(lesson)
 })
 
@@ -96,4 +118,3 @@ router.delete('/:id', requireMembership('TEACHER'), async (req, res) => {
   await prisma.lesson.delete({ where: { id } })
   res.status(204).end()
 })
-
