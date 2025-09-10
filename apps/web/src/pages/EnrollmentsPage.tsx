@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 
 export default function EnrollmentsPage() {
   const { show } = useToast()
-  const schoolId = getSchoolId() || 'seed-school'
+  const [schoolId, setSchoolIdState] = React.useState<string>(getSchoolId() || '')
   const [items, setItems] = React.useState<any[]>([])
   const [classes, setClasses] = React.useState<any[]>([])
   const [students, setStudents] = React.useState<any[]>([])
@@ -32,13 +32,19 @@ export default function EnrollmentsPage() {
     // usuários no formato flatten: { id,name,email,role }
     setStudents(us.items.map((m:any)=> ({ id: m.id ?? m.user?.id, name: m.name ?? m.user?.name, email: m.email ?? m.user?.email })))
   }
-  React.useEffect(()=>{ load().catch(()=>{}) },[schoolId])
+  React.useEffect(()=>{ if (schoolId) load().catch(()=>{}) },[schoolId])
   // Recarrega ao voltar a aba para ativo (sincroniza com criações em outras telas)
   React.useEffect(() => {
-    function onVis(){ if (document.visibilityState === 'visible') load().catch(()=>{}) }
+    function onVis(){ if (document.visibilityState === 'visible' && getSchoolId()) { setSchoolIdState(getSchoolId()!); } }
     document.addEventListener('visibilitychange', onVis)
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [schoolId])
+  // Escuta mudanças de escola disparadas pelo Layout
+  React.useEffect(() => {
+    function onChange(e: any){ const id = getSchoolId() || e?.detail; if (id) setSchoolIdState(id) }
+    window.addEventListener('school-change', onChange)
+    return () => window.removeEventListener('school-change', onChange)
+  }, [])
 
   function exportCSV(){
     const rows = items.map((i:any)=> ({ id: i.id, class: i.class?.name, student: i.student?.name, email: i.student?.email }))

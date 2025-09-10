@@ -8,13 +8,18 @@ export default function SubjectsPage() {
   const [items, setItems] = React.useState<any[]>([])
   const [name, setName] = React.useState('')
   const [msg, setMsg] = React.useState('')
-  const schoolId = getSchoolId() || 'seed-school'
+  const [schoolId, setSchoolIdState] = React.useState<string>(getSchoolId() || '')
 
   async function load() {
     const r = await api<{ items: any[] }>(`/${schoolId}/subjects?page=1&limit=50`)
     setItems(r.items)
   }
-  React.useEffect(()=>{ load().catch(()=>{}) },[schoolId])
+  React.useEffect(()=>{ if (schoolId) load().catch(()=>{}) },[schoolId])
+  React.useEffect(()=>{
+    function onChange(){ const id = getSchoolId(); if (id) setSchoolIdState(id) }
+    window.addEventListener('school-change', onChange)
+    return ()=> window.removeEventListener('school-change', onChange)
+  },[])
 
   async function create(e: React.FormEvent) {
     e.preventDefault()

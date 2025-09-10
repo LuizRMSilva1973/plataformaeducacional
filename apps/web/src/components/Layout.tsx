@@ -19,15 +19,15 @@ export function Layout() {
     api<{ items: School[] }>(`/admin/schools?page=1&limit=50`).then((r) => {
       setSchools(r.items)
       if (!schoolId) {
-        const id = r.items[0]?.id || 'seed-school'
-        setSchool(id)
-        setSchoolId(id)
+        const id = r.items[0]?.id || ''
+        if (id) {
+          setSchool(id)
+          setSchoolId(id)
+          window.dispatchEvent(new CustomEvent('school-change', { detail: id }))
+        }
       }
     }).catch(() => {
-      if (!schoolId) {
-        setSchool('seed-school')
-        setSchoolId('seed-school')
-      }
+      // Mantém seleção atual se houver; evita fallback fictício
     })
   }, [token])
 
@@ -42,6 +42,7 @@ export function Layout() {
   function changeSchool(id: string) {
     setSchool(id)
     setSchoolId(id)
+    window.dispatchEvent(new CustomEvent('school-change', { detail: id }))
   }
 
   function doLogout() {
@@ -71,7 +72,6 @@ export function Layout() {
           <span className="muted">Escola:</span>
           <select className="select" value={schoolId} onChange={(e) => changeSchool(e.target.value)}>
             {schools.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
-            {!schools.find(s=>s.id==='seed-school') && (<option value="seed-school">Seed School</option>)}
           </select>
           <span className="muted">{isAdmin ? 'Admin' : (role || '')}</span>
           <div className="spacer"></div>

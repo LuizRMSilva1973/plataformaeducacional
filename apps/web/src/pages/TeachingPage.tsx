@@ -5,7 +5,7 @@ import { downloadCSV } from '../lib/export'
 
 export default function TeachingPage() {
   const { show } = useToast()
-  const schoolId = getSchoolId() || 'seed-school'
+  const [schoolId, setSchoolIdState] = React.useState<string>(getSchoolId() || '')
   const [items, setItems] = React.useState<any[]>([])
   const [classes, setClasses] = React.useState<any[]>([])
   const [subjects, setSubjects] = React.useState<any[]>([])
@@ -38,7 +38,12 @@ export default function TeachingPage() {
     setSubjects(sub.items)
     setTeachers(us.items.map((m:any)=> ({ id: m.id ?? m.user?.id, name: m.name ?? m.user?.name, email: m.email ?? m.user?.email })))
   }
-  React.useEffect(()=>{ load().catch(()=>{}) },[schoolId, fTeacher, fClass, fSubject, page, limit])
+  React.useEffect(()=>{ if (schoolId) load().catch(()=>{}) },[schoolId, fTeacher, fClass, fSubject, page, limit])
+  React.useEffect(()=>{
+    function onChange(){ const id = getSchoolId(); if (id) setSchoolIdState(id) }
+    window.addEventListener('school-change', onChange)
+    return ()=> window.removeEventListener('school-change', onChange)
+  },[])
 
   function exportCSV(){
     const rows = items.map((i:any)=> ({ id: i.id, teacher: i.teacher?.name, class: i.class?.name, subject: i.subject?.name }))

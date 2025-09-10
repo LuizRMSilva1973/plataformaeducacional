@@ -17,7 +17,7 @@ export default function UsersPage() {
   const [cRole, setCRole] = React.useState<'DIRECTOR'|'TEACHER'|'STUDENT'>('STUDENT')
   const [error, setError] = React.useState<string>('')
   const dq = useDebouncedValue(q, 300)
-  const schoolId = getSchoolId() || 'seed-school'
+  const [schoolId, setSchoolIdState] = React.useState<string>(getSchoolId() || '')
 
   async function load() {
     const qs = new URLSearchParams()
@@ -28,7 +28,12 @@ export default function UsersPage() {
     const r = await api<{ items: any[] }>(`/${schoolId}/users?${qs.toString()}`)
     setItems(r.items)
   }
-  React.useEffect(() => { load().catch(()=>{}) }, [schoolId, dq, role, page, limit])
+  React.useEffect(() => { if (schoolId) load().catch(()=>{}) }, [schoolId, dq, role, page, limit])
+  React.useEffect(() => {
+    function onChange(){ const id = getSchoolId(); if (id) setSchoolIdState(id) }
+    window.addEventListener('school-change', onChange)
+    return () => window.removeEventListener('school-change', onChange)
+  }, [])
 
   function exportCSV(){
     const rows = items.map((m:any)=> ({
