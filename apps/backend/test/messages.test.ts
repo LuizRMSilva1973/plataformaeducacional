@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
 import request from 'supertest'
 import { createServer } from '../src/server/app'
 
 const app = createServer()
 
-describe.skip('Mensagens (communications)', () => {
+describe.sequential('Mensagens (communications)', () => {
+  vi.setTimeout(30000)
   let adminToken = ''
   let memberToken = ''
   let schoolId = ''
