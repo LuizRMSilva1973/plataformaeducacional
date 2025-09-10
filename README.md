@@ -15,6 +15,7 @@ Stack e decisões
 - Autenticação: JWT; admin global; memberships por escola com papéis `DIRECTOR|TEACHER|STUDENT`.
 - Autorização: middlewares `requireAdmin` e `requireMembership(role?)` (Admin ignora escopo).
 - Página Web: esqueleto com login/dashboard (exemplo).
+- Logs: correlação por `x-request-id` — frontend envia por requisição e o backend retorna/propaga no cabeçalho e logs estruturados.
 
 ## Servidores (dev)
 - Frontend (Vite): `http://localhost:5173`
