@@ -12,6 +12,7 @@ export function Layout() {
   const [schoolId, setSchool] = React.useState(getSchoolId() || '')
   const [role, setRole] = React.useState<string|undefined>(undefined)
   const [isAdmin, setIsAdmin] = React.useState<boolean>(false)
+  const [unread, setUnread] = React.useState<number>(0)
   const navigate = useNavigate()
   const [theme, setTheme] = React.useState<string>(() => localStorage.getItem('theme') || 'dark')
 
@@ -47,6 +48,20 @@ export function Layout() {
     api<{ role: string|null, isAdmin: boolean }>(`/${schoolId}/profile/me`).then((r)=>{
       setRole(r.role || undefined)
       setIsAdmin(!!r.isAdmin)
+    }).catch(()=>{})
+  }, [token, schoolId])
+
+  // Simple unread indicator based on last-opened timestamp for messages
+  React.useEffect(() => {
+    if (!token || !schoolId) return
+    let meId: string|undefined
+    api<any>(`/${schoolId}/profile/me`).then(async (me)=>{
+      meId = me?.user?.id
+      if (!meId) return
+      const msgs = await api<{ items:any[] }>(`/${schoolId}/communications/messages?toUserId=${meId}&limit=50&order=desc`)
+      const lastOpened = Number(localStorage.getItem('msgs_last_opened')||'0')
+      const count = (msgs.items||[]).filter((m:any)=> new Date(m.createdAt).getTime() > lastOpened).length
+      setUnread(count)
     }).catch(()=>{})
   }, [token, schoolId])
 
@@ -115,7 +130,7 @@ export function Layout() {
           {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/reports/grades"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="report"/>Relatório Notas</span></NavLink>}
           {(isAdmin || role === 'DIRECTOR' || role === 'TEACHER' || role === 'STUDENT') && <NavLink to="/announcements"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="announce"/>Avisos</span></NavLink>}
           {(isAdmin || role === 'DIRECTOR' || role === 'TEACHER' || role === 'STUDENT') && <NavLink to="/lessons"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="lesson"/>Conteúdos</span></NavLink>}
-          {(isAdmin || role === 'DIRECTOR' || role === 'TEACHER' || role === 'STUDENT') && <NavLink to="/messages"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="messages"/>Mensagens</span></NavLink>}
+          {(isAdmin || role === 'DIRECTOR' || role === 'TEACHER' || role === 'STUDENT') && <NavLink to="/messages"><span style={{display:'inline-flex',alignItems:'center',gap:8, position:'relative'}}><Icon name="messages"/>Mensagens {unread>0 && <span style={{background:'tomato',color:'#fff',borderRadius:12,fontSize:10,padding:'0 6px',marginLeft:4}}>{unread}</span>}</span></NavLink>}
           {(role === 'STUDENT') && <NavLink to="/me/grades"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="grades"/>Minhas Notas</span></NavLink>}
           {(role === 'STUDENT') && <NavLink to="/me/attendance"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="attendance"/>Minhas Presenças</span></NavLink>}
           {(role === 'STUDENT') && <NavLink to="/me/subscriptions"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="billing"/>Minhas Assinaturas</span></NavLink>}

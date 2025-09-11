@@ -38,7 +38,9 @@ export default function MessagesPage() {
     setLoading(false)
   }, [schoolId, q, page, limit, fClass, fFrom, fTo])
 
-  React.useEffect(()=>{ load().catch(()=>{}) },[load])
+  React.useEffect(()=>{ load().catch(()=>{})
+    try{ localStorage.setItem('msgs_last_opened', String(Date.now())) }catch{}
+  },[load])
 
   async function send(e: React.FormEvent) {
     e.preventDefault()

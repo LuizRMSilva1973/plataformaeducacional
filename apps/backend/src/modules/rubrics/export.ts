@@ -7,19 +7,20 @@ export const router = Router()
 
 router.get('/export', requireMembership('TEACHER'), async (req, res) => {
   const schoolId = req.schoolId!
-  const schema = z.object({ assignmentId: z.string(), format: z.enum(['json','csv','xlsx']).optional() })
+  const schema = z.object({ assignmentId: z.string(), classId: z.string().optional(), studentUserId: z.string().optional(), format: z.enum(['json','csv','xlsx']).optional() })
   const parsed = schema.safeParse(req.query)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
-  const { assignmentId, format } = parsed.data
+  const { assignmentId, format, classId, studentUserId } = parsed.data
   const a = await prisma.assignment.findUnique({ where: { id: assignmentId }, include: { class: true, subject: true, AssignmentRubric: { include: { rubric: { include: { criteria: true } } } } } })
   if (!a || a.schoolId !== schoolId) return res.status(404).json({ error: 'Assignment not found' })
   const can = await prisma.teachingAssignment.findFirst({ where: { schoolId, teacherUserId: req.user!.id, classId: a.classId, subjectId: a.subjectId } })
   if (!can) return res.status(403).json({ error: 'Not allowed' })
 
-  const subs = await prisma.submission.findMany({ where: { assignmentId }, include: { student: { select: { id: true, name: true, email: true } }, SubmissionFeedback: { include: { items: true } } } })
+  const subs = await prisma.submission.findMany({ where: { assignmentId, ...(studentUserId ? { studentUserId } : {}) }, include: { student: { select: { id: true, name: true, email: true } }, SubmissionFeedback: { include: { items: true } }, assignment: { select: { classId: true } } } })
+  const filteredSubs = classId ? subs.filter((s:any)=>s.assignment?.classId===classId) : subs
   const criteria = (a.AssignmentRubric?.rubric?.criteria || []) as any[]
   const header = ['submissionId','studentName','studentEmail', ...criteria.map((c:any)=>`c:${c.label}`), 'comment']
-  const rows = subs.map((s:any) => {
+  const rows = filteredSubs.map((s:any) => {
     const fb = (s as any).SubmissionFeedback
     const map = new Map<string, number>()
     for (const it of (fb?.items||[])) map.set(it.criterionId, it.score)
