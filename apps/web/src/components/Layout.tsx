@@ -57,6 +57,13 @@ export function Layout() {
     api<{ count: number }>(`/${schoolId}/communications/unread-count`).then(r=> setUnread(r.count)).catch(()=>{})
   }, [token, schoolId])
 
+  React.useEffect(()=>{
+    function onUpdate(){ if (token && schoolId) api<{ count:number }>(`/${schoolId}/communications/unread-count`).then(r=> setUnread(r.count)).catch(()=>{}) }
+    const t = setInterval(onUpdate, 30000)
+    window.addEventListener('messages-updated', onUpdate as any)
+    return ()=> { clearInterval(t); window.removeEventListener('messages-updated', onUpdate as any) }
+  }, [token, schoolId])
+
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('theme', theme)

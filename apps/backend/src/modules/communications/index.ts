@@ -52,7 +52,8 @@ router.get('/messages', requireMembership(), async (req, res) => {
     ...(classId ? { classId } : {}),
     ...(q ? { content: { contains: q, mode: 'insensitive' as const } } : {}),
   };
-  const [total, items] = await Promise.all([
+  const userId = req.user!.id
+  const [total, raw] = await Promise.all([
     prisma.message.count({ where }),
     prisma.message.findMany({
       where,
@@ -72,6 +73,10 @@ router.get('/messages', requireMembership(), async (req, res) => {
       }
     })
   ]);
+  const ids = raw.map((m:any)=>m.id)
+  const reads = ids.length ? await prisma.messageRead.findMany({ where: { userId, messageId: { in: ids } }, select: { messageId: true } }) : []
+  const readSet = new Set(reads.map((r:any)=>r.messageId))
+  const items = raw.map((m:any)=> ({ ...m, read: readSet.has(m.id) || m.fromUserId === userId }))
   res.json({ items, meta: buildMeta(total, p) });
 });
 
@@ -128,6 +133,16 @@ router.post('/mark-read', requireMembership(), async (req, res) => {
   const toCreate = ids2.filter((id:any)=> !existing.has(id)).map((id:any)=> ({ userId, messageId: id }))
   if (toCreate.length){ await prisma.messageRead.createMany({ data: toCreate, skipDuplicates: true }) }
   res.json({ ok: true, count: toCreate.length })
+})
+
+// Mark a single message as read
+router.post('/mark-read/:messageId', requireMembership(), async (req, res) => {
+  const userId = req.user!.id
+  const messageId = req.params.messageId
+  try{
+    await prisma.messageRead.create({ data: { userId, messageId } })
+  }catch{}
+  res.json({ ok: true })
 })
 
 const patchAnn = z.object({ title: z.string().min(1).optional(), content: z.string().min(1).optional(), classId: z.string().optional() });

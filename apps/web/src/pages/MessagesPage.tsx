@@ -96,10 +96,11 @@ export default function MessagesPage() {
               const from = m.fromUser?.name || m.fromUserId || '—'
               const to = m.toUser?.name || m.toUserId || (m.class?.name ? `Turma ${m.class.name}` : '—')
               return (
-                <li key={m.id}>
+                <li key={m.id} style={{fontWeight: m.read ? 400 : 700}}>
                   <div className="muted">{new Date(m.createdAt).toLocaleString()}</div>
                   <div><strong>{from}</strong> → <strong>{to}</strong></div>
                   <div>{m.content}</div>
+                  {!m.read && <button className="button" onClick={async ()=>{ await api(`/${schoolId}/communications/mark-read/${m.id}`, { method:'POST', body: JSON.stringify({}) }); load(); window.dispatchEvent(new Event('messages-updated')) }}>Marcar como lida</button>}
                 </li>
               )
             })}
