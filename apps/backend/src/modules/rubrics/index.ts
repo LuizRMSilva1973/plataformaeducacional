@@ -45,6 +45,9 @@ router.post('/feedback', requireMembership('TEACHER'), async (req, res) => {
   const can = await prisma.teachingAssignment.findFirst({ where: { schoolId, teacherUserId: req.user!.id, classId: sub.assignment.classId, subjectId: sub.assignment.subjectId } })
   if (!can) return res.status(403).json({ error: 'Not allowed' })
   const fb = await prisma.submissionFeedback.upsert({ where: { submissionId: sub.id }, update: { comment: parsed.data.comment, items: { deleteMany: {}, create: parsed.data.items.map(i=>({ criterionId: i.criterionId, score: i.score, comment: i.comment })) } }, create: { submissionId: sub.id, teacherUserId: req.user!.id, comment: parsed.data.comment, items: { create: parsed.data.items.map(i=>({ criterionId: i.criterionId, score: i.score, comment: i.comment })) } }, include: { items: true } })
+  // Notify student via internal message
+  try{
+    await prisma.message.create({ data: { schoolId, fromUserId: req.user!.id, toUserId: sub.studentUserId, classId: sub.assignment.classId, content: `Feedback disponível para sua entrega da tarefa: ${sub.assignment.title}. Acesse: /me/submissions/${sub.id}` } })
+  }catch{}
   res.status(201).json(fb)
 })
-

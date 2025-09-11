@@ -26,7 +26,11 @@ export default function MyGradesPage() {
         <h3>Minhas Notas</h3>
         <ul className="list">
           {items.map((g:any)=> (
-            <li key={g.id}>{new Date(g.gradedAt).toLocaleString()} • {g.value}</li>
+            <li key={g.id}>
+              {new Date(g.gradedAt).toLocaleString()} • {g.value}
+              {g.comment ? <div className="muted">Comentário: {g.comment}</div> : null}
+              {g.assignmentId ? <div><a className="button" href={`/me/submissions`}>Ver feedback</a></div> : null}
+            </li>
           ))}
           {items.length===0 && <li className="muted">Nenhuma nota encontrada.</li>}
         </ul>
@@ -34,4 +38,3 @@ export default function MyGradesPage() {
     </div>
   )
 }
-
