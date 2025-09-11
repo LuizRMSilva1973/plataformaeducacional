@@ -39,7 +39,9 @@ export default function MessagesPage() {
   }, [schoolId, q, page, limit, fClass, fFrom, fTo])
 
   React.useEffect(()=>{ load().catch(()=>{})
-    try{ localStorage.setItem('msgs_last_opened', String(Date.now())) }catch{}
+    // Mark read via API
+    const schoolId = getSchoolId() || ''
+    if (schoolId) api(`/${schoolId}/communications/mark-read`, { method:'POST', body: JSON.stringify({}) }).catch(()=>{})
   },[load])
 
   async function send(e: React.FormEvent) {

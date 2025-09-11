@@ -291,6 +291,17 @@ model Message {
   @@index([schoolId])
 }
 
+model MessageRead {
+  id        String   @id @default(cuid())
+  message   Message  @relation(fields: [messageId], references: [id])
+  messageId String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  readAt    DateTime @default(now())
+  @@unique([messageId, userId])
+  @@index([userId])
+}
+
 model StoredFile {
   id        String   @id @default(cuid())
   school    School   @relation(fields: [schoolId], references: [id])

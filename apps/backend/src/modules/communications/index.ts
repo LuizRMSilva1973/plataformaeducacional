@@ -91,6 +91,45 @@ router.post('/messages', requireMembership(), rateLimit({ windowMs: 60_000, max:
   res.status(201).json(msg);
 });
 
+// Unread count for current user (direct or class messages)
+router.get('/unread-count', requireMembership(), async (req, res) => {
+  const schoolId = req.schoolId!
+  const userId = req.user!.id
+  // classes for this user (as student or teacher)
+  const [enr, teach] = await Promise.all([
+    prisma.enrollment.findMany({ where: { schoolId, studentUserId: userId }, select: { classId: true } }),
+    prisma.teachingAssignment.findMany({ where: { schoolId, teacherUserId: userId }, select: { classId: true } })
+  ])
+  const classIds = Array.from(new Set([...enr.map((e:any)=>e.classId), ...teach.map((t:any)=>t.classId)]))
+  const messages = await prisma.message.findMany({ where: { schoolId, OR: [ { toUserId: userId }, ...(classIds.length? [{ classId: { in: classIds } }]:[]) ] }, select: { id: true, fromUserId: true } })
+  const ids = messages.filter((m:any) => m.fromUserId !== userId).map((m:any)=>m.id)
+  if (!ids.length) return res.json({ count: 0 })
+  const reads = await prisma.messageRead.findMany({ where: { userId, messageId: { in: ids } }, select: { messageId: true } })
+  const readSet = new Set(reads.map((r:any)=>r.messageId))
+  const count = ids.filter((id:any)=> !readSet.has(id)).length
+  res.json({ count })
+})
+
+// Mark messages as read for current user
+router.post('/mark-read', requireMembership(), async (req, res) => {
+  const schoolId = req.schoolId!
+  const userId = req.user!.id
+  const [enr2, teach2] = await Promise.all([
+    prisma.enrollment.findMany({ where: { schoolId, studentUserId: userId }, select: { classId: true } }),
+    prisma.teachingAssignment.findMany({ where: { schoolId, teacherUserId: userId }, select: { classId: true } })
+  ])
+  const classIds2 = Array.from(new Set([...enr2.map((e:any)=>e.classId), ...teach2.map((t:any)=>t.classId)]))
+  const messages2 = await prisma.message.findMany({ where: { schoolId, OR: [ { toUserId: userId }, ...(classIds2.length? [{ classId: { in: classIds2 } }]:[]) ] }, select: { id: true } })
+  const ids2 = messages2.map((m:any)=>m.id)
+  if (!ids2.length) return res.json({ ok: true, count: 0 })
+  // existing reads
+  const reads2 = await prisma.messageRead.findMany({ where: { userId, messageId: { in: ids2 } }, select: { messageId: true } })
+  const existing = new Set(reads2.map((r:any)=>r.messageId))
+  const toCreate = ids2.filter((id:any)=> !existing.has(id)).map((id:any)=> ({ userId, messageId: id }))
+  if (toCreate.length){ await prisma.messageRead.createMany({ data: toCreate, skipDuplicates: true }) }
+  res.json({ ok: true, count: toCreate.length })
+})
+
 const patchAnn = z.object({ title: z.string().min(1).optional(), content: z.string().min(1).optional(), classId: z.string().optional() });
 router.patch('/announcements/:id', requireMembership('DIRECTOR'), async (req, res) => {
   const parsed = patchAnn.safeParse(req.body);

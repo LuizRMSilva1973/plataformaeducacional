@@ -51,18 +51,10 @@ export function Layout() {
     }).catch(()=>{})
   }, [token, schoolId])
 
-  // Simple unread indicator based on last-opened timestamp for messages
+  // Unread indicator via API (user + classes)
   React.useEffect(() => {
     if (!token || !schoolId) return
-    let meId: string|undefined
-    api<any>(`/${schoolId}/profile/me`).then(async (me)=>{
-      meId = me?.user?.id
-      if (!meId) return
-      const msgs = await api<{ items:any[] }>(`/${schoolId}/communications/messages?toUserId=${meId}&limit=50&order=desc`)
-      const lastOpened = Number(localStorage.getItem('msgs_last_opened')||'0')
-      const count = (msgs.items||[]).filter((m:any)=> new Date(m.createdAt).getTime() > lastOpened).length
-      setUnread(count)
-    }).catch(()=>{})
+    api<{ count: number }>(`/${schoolId}/communications/unread-count`).then(r=> setUnread(r.count)).catch(()=>{})
   }, [token, schoolId])
 
   React.useEffect(() => {
