@@ -105,6 +105,7 @@ export function Layout() {
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/subjects"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="subjects"/>Disciplinas</span></NavLink>}
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/enrollments"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="enroll"/>Matrículas</span></NavLink>}
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/teaching"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="teaching"/>Atribuições</span></NavLink>}
+          {(role === 'TEACHER') && <NavLink to="/teacher"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="report"/>Professor: Painel</span></NavLink>}
           {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/assignments"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="assign"/>Tarefas</span></NavLink>}
           {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/attendance"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="attendance"/>Presenças</span></NavLink>}
           {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/grades"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="grades"/>Notas</span></NavLink>}

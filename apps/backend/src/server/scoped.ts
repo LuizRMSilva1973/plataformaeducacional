@@ -13,6 +13,7 @@ import { router as gradesRouter } from '../modules/grades/index.js';
 import { router as attendanceRouter } from '../modules/attendance/index.js';
 import { router as communicationsRouter } from '../modules/communications/index.js';
 import { router as profileRouter } from '../modules/profile/index.js';
+import { router as teacherProfileRouter } from '../modules/profile/teacher.js';
 import { router as lessonsRouter } from '../modules/lessons/index.js';
 import { router as filesRouter } from '../modules/files/index.js';
 import { router as pricingRouter } from '../modules/pricing/index.js';
@@ -25,6 +26,7 @@ export const router = Router();
 
 router.use('/:schoolId', schoolScope, Router()
   .use('/profile', profileRouter)
+  .use('/profile/teacher', teacherProfileRouter)
   .use('/schools', schoolsRouter)
   .use('/users', usersRouter)
   .use('/members', membershipsRouter)
