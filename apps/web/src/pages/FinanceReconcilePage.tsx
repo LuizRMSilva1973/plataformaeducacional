@@ -10,6 +10,7 @@ export default function FinanceReconcilePage(){
   const [overall, setOverall] = React.useState<{ totals: Record<string, number>, nets: Nets, gmvCents?: number }|null>(null)
   const [byProduct, setByProduct] = React.useState<any[]>([])
   const [series, setSeries] = React.useState<any[]>([])
+  const [interval, setInterval] = React.useState('day')
 
   async function load(){
     const qs = new URLSearchParams()
@@ -18,7 +19,9 @@ export default function FinanceReconcilePage(){
     const r = await api<{ overall: { totals: Record<string, number>, nets: Nets, gmvCents?: number }, byProductType: any[] }>(`/${schoolId}/billing/reconcile?`+qs.toString())
     setOverall(r.overall)
     setByProduct(r.byProductType||[])
-    const ts = await api<{ items:any[] }>(`/${schoolId}/billing/timeseries?`+qs.toString())
+    const qs2 = new URLSearchParams(qs)
+    if (interval) qs2.set('interval', interval)
+    const ts = await api<{ items:any[] }>(`/${schoolId}/billing/timeseries?`+qs2.toString())
     setSeries(ts.items||[])
   }
 
@@ -41,6 +44,14 @@ export default function FinanceReconcilePage(){
         <div style={{display:'flex',alignItems:'end'}}>
           <button className="button" onClick={()=>load()}>Aplicar</button>
         </div>
+        <label>
+          <div className="muted">Intervalo</div>
+          <select className="select" value={interval} onChange={e=>setInterval(e.target.value)}>
+            <option value="day">Diário</option>
+            <option value="week">Semanal</option>
+            <option value="month">Mensal</option>
+          </select>
+        </label>
       </div>
 
       <div className="grid" style={{gridTemplateColumns:'repeat(6, 1fr)', gap:8, marginTop:12}}>
@@ -94,7 +105,11 @@ export default function FinanceReconcilePage(){
           </tbody>
         </table>
         <div style={{marginTop:8}}>
-          <a className="button" href={`${(import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'}/${schoolId}/billing/timeseries?format=csv${from?`&from=${new Date(from).toISOString()}`:''}${to?`&to=${new Date(to).toISOString()}`:''}`}>Exportar CSV (série)</a>
+          <a className="button" href={`${(import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'}/${schoolId}/billing/timeseries?format=csv${from?`&from=${new Date(from).toISOString()}`:''}${to?`&to=${new Date(to).toISOString()}`:''}&interval=${interval}`}>Exportar CSV (série)</a>
+          <a className="button" href={`${(import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'}/${schoolId}/billing/timeseries?format=xlsx${from?`&from=${new Date(from).toISOString()}`:''}${to?`&to=${new Date(to).toISOString()}`:''}&interval=${interval}`} style={{marginLeft:8}}>Exportar Excel (série)</a>
+        </div>
+        <div style={{marginTop:12}}>
+          <LineChart data={series.map((r:any)=>({ x: r.bucket, y: r.gmvCents||0 }))} color="#2563eb" title="GMV" />
         </div>
       </div>
     </div>
@@ -115,6 +130,25 @@ function Bar({ value, max, color }: { value: number, max: number, color: string 
   return (
     <div style={{background:'#e5e7eb',height:8,borderRadius:4,overflow:'hidden',marginTop:4}}>
       <div style={{width:`${pct}%`,height:'100%',background:color}}></div>
+    </div>
+  )
+}
+
+function LineChart({ data, color, title }: { data: { x: string, y: number }[], color: string, title: string }){
+  const w = 600, h = 160, p = 20
+  const ys = data.map(d=>d.y)
+  const max = Math.max(1, ...ys)
+  const pts = data.map((d,i)=>{
+    const x = p + (i*(w-2*p))/Math.max(1,(data.length-1))
+    const y = h - p - (d.y/max)*(h-2*p)
+    return `${x},${y}`
+  }).join(' ')
+  return (
+    <div>
+      <div className="muted">{title}</div>
+      <svg width={w} height={h} style={{background:'#fff', border:'1px solid #e5e7eb'}}>
+        <polyline fill="none" stroke={color} strokeWidth="2" points={pts} />
+      </svg>
     </div>
   )
 }

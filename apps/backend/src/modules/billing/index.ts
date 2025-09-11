@@ -115,7 +115,7 @@ router.get('/summary', requireMembership('DIRECTOR'), async (req, res) => {
 // Reconciliation endpoint: breakdown by productType with totals/nets
 router.get('/reconcile', requireMembership('DIRECTOR'), async (req, res) => {
   const schoolId = req.schoolId!
-  const schema = z.object({ from: z.coerce.date().optional(), to: z.coerce.date().optional(), format: z.enum(['json','csv']).optional() })
+  const schema = z.object({ from: z.coerce.date().optional(), to: z.coerce.date().optional(), format: z.enum(['json','csv','xlsx']).optional() })
   const parsed = schema.safeParse(req.query)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
   const { from, to, format } = parsed.data as any
@@ -145,7 +145,7 @@ router.get('/reconcile', requireMembership('DIRECTOR'), async (req, res) => {
   const result = Array.from(groups.values()).map(g => ({ productType: g.productType, gmvCents: gmvByProduct.get(g.productType) || 0, ...computeTotals(g.entries) }))
   const overall = computeTotals(items.map((it: any)=>({ entryType: it.entryType, direction: it.direction, amountCents: it.amountCents, meta: it.meta })))
 
-  if (format === 'csv'){
+  if (format === 'csv' || format === 'xlsx'){
     const lines = ['productType,gmvCents,schoolEarningCents,platformFeeCents,refundCents,schoolNetCents,platformNetCents']
     const schoolEarning = (overall.totals['SCHOOL_EARNING']||0)
     const platformFee = (overall.totals['PLATFORM_FEE']||0)
@@ -154,10 +154,20 @@ router.get('/reconcile', requireMembership('DIRECTOR'), async (req, res) => {
     for (const row of result){
       lines.push([row.productType, row.gmvCents, row.totals['SCHOOL_EARNING']||0, row.totals['PLATFORM_FEE']||0, row.totals['REFUND']||0, row.nets.schoolNet, row.nets.platformNet].join(','))
     }
-    const csv = lines.join('\n')
-    res.setHeader('Content-Type','text/csv; charset=utf-8')
-    res.setHeader('Content-Disposition','attachment; filename="reconcile.csv"')
-    return res.send(csv)
+    if (format === 'csv'){
+      const csv = lines.join('\n')
+      res.setHeader('Content-Type','text/csv; charset=utf-8')
+      res.setHeader('Content-Disposition','attachment; filename="reconcile.csv"')
+      return res.send(csv)
+    } else {
+      // Simple Excel 2003 XML (SpreadsheetML) for compatibility
+      function cell(v: string){ return `<Cell><Data ss:Type="String">${v}</Data></Cell>` }
+      const rowsXml = lines.map((ln)=>`<Row>${ln.split(',').map(cell).join('')}</Row>`).join('')
+      const xml = `<?xml version="1.0"?>\n<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Reconcile\"><Table>${rowsXml}</Table></Worksheet></Workbook>`
+      res.setHeader('Content-Type','application/vnd.ms-excel')
+      res.setHeader('Content-Disposition','attachment; filename="reconcile.xls"')
+      return res.send(xml)
+    }
   }
 
   res.json({ overall: { ...overall, gmvCents: overallGMV }, byProductType: result })
@@ -170,7 +180,7 @@ router.get('/timeseries', requireMembership('DIRECTOR'), async (req, res) => {
     from: z.coerce.date().optional(),
     to: z.coerce.date().optional(),
     interval: z.enum(['day','week','month']).default('day').optional(),
-    format: z.enum(['json','csv']).optional(),
+    format: z.enum(['json','csv','xlsx']).optional(),
   })
   const parsed = schema.safeParse(req.query)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
@@ -229,15 +239,24 @@ router.get('/timeseries', requireMembership('DIRECTOR'), async (req, res) => {
     }
   })
 
-  if (format === 'csv'){
+  if (format === 'csv' || format === 'xlsx'){
     const lines = ['bucket,gmvCents,schoolEarningCents,platformFeeCents,refundCents,schoolNetCents,platformNetCents']
     for (const r of rows){
       lines.push([r.bucket, r.gmvCents, r.totals['SCHOOL_EARNING']||0, r.totals['PLATFORM_FEE']||0, r.totals['REFUND']||0, r.nets.schoolNet, r.nets.platformNet].join(','))
     }
-    const csv = lines.join('\n')
-    res.setHeader('Content-Type','text/csv; charset=utf-8')
-    res.setHeader('Content-Disposition','attachment; filename="timeseries.csv"')
-    return res.send(csv)
+    if (format === 'csv'){
+      const csv = lines.join('\n')
+      res.setHeader('Content-Type','text/csv; charset=utf-8')
+      res.setHeader('Content-Disposition','attachment; filename="timeseries.csv"')
+      return res.send(csv)
+    } else {
+      function cell(v: string){ return `<Cell><Data ss:Type=\"String\">${v}</Data></Cell>` }
+      const rowsXml = lines.map((ln)=>`<Row>${ln.split(',').map(cell).join('')}</Row>`).join('')
+      const xml = `<?xml version=\"1.0\"?>\n<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"TimeSeries\"><Table>${rowsXml}</Table></Worksheet></Workbook>`
+      res.setHeader('Content-Type','application/vnd.ms-excel')
+      res.setHeader('Content-Disposition','attachment; filename="timeseries.xls"')
+      return res.send(xml)
+    }
   }
 
   res.json({ items: rows })
