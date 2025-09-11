@@ -29,6 +29,7 @@ import TeacherDiaryPage from './pages/TeacherDiaryPage';
 import TeacherReportPage from './pages/TeacherReportPage';
 import RubricsPage from './pages/RubricsPage';
 import SubmissionEvaluatePage from './pages/SubmissionEvaluatePage';
+import TeacherSubmissionsPage from './pages/TeacherSubmissionsPage';
 import MySubscriptionsPage from './pages/MySubscriptionsPage';
 import PricingPage from './pages/PricingPage';
 import StorePage from './pages/StorePage';
@@ -82,6 +83,7 @@ const router = createBrowserRouter([
       { path: 'teacher/report', element: <TeacherReportPage /> },
       { path: 'teacher/rubrics', element: <RubricsPage /> },
       { path: 'teacher/evaluate/:id', element: <SubmissionEvaluatePage /> },
+      { path: 'teacher/submissions', element: <TeacherSubmissionsPage /> },
       { path: 'me/grades', element: <MyGradesPage /> },
       { path: 'me/attendance', element: <MyAttendancePage /> },
       { path: 'me/subscriptions', element: <MySubscriptionsPage /> },

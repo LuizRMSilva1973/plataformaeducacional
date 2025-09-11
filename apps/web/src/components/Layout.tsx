@@ -106,6 +106,7 @@ export function Layout() {
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/enrollments"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="enroll"/>Matrículas</span></NavLink>}
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/teaching"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="teaching"/>Atribuições</span></NavLink>}
           {(role === 'TEACHER') && <NavLink to="/teacher"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="report"/>Professor: Painel</span></NavLink>}
+          {(role === 'TEACHER') && <NavLink to="/teacher/submissions"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="messages"/>Submissões</span></NavLink>}
           {(role === 'TEACHER') && <NavLink to="/teacher/rubrics"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="assign"/>Rubricas</span></NavLink>}
           {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/assignments"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="assign"/>Tarefas</span></NavLink>}
           {(isAdmin || role === 'TEACHER' || role === 'DIRECTOR') && <NavLink to="/attendance"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="attendance"/>Presenças</span></NavLink>}

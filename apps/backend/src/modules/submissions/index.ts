@@ -30,6 +30,17 @@ router.get('/', requireMembership(), async (req, res) => {
   res.json({ items, meta: buildMeta(total, p) });
 });
 
+// List submissions for teacher's assignments
+router.get('/teacher', requireMembership('TEACHER'), async (req, res) => {
+  const schoolId = req.schoolId!
+  const teacherUserId = req.user!.id
+  const teaching = await prisma.teachingAssignment.findMany({ where: { schoolId, teacherUserId }, select: { classId: true, subjectId: true } })
+  if (!teaching.length) return res.json({ items: [], meta: { page:1, limit:0, total:0, pages:1 } })
+  const pairs = teaching.map((t: { classId: string; subjectId: string })=>({ classId: t.classId, subjectId: t.subjectId }))
+  const submissions = await prisma.submission.findMany({ where: { assignment: { schoolId, OR: pairs } }, orderBy: { submittedAt: 'desc' }, include: { student: { select: { id: true, name: true, email: true } }, assignment: { select: { id: true, title: true, classId: true, subjectId: true } } } })
+  res.json({ items: submissions, meta: { page:1, limit: submissions.length, total: submissions.length, pages: 1 } })
+})
+
 const submitSchema = z.object({ assignmentId: z.string() });
 router.post('/', requireMembership('STUDENT'), async (req, res) => {
   const parsed = submitSchema.safeParse(req.body);

@@ -6,13 +6,22 @@ export default function RubricsPage(){
   const schoolId = getSchoolId()
   const { show } = useToast()
   const [items, setItems] = React.useState<any[]>([])
+  const [assignments, setAssignments] = React.useState<any[]>([])
+  const [teacher, setTeacher] = React.useState<any>(null)
   const [name, setName] = React.useState('')
   const [criteria, setCriteria] = React.useState<{ label: string, maxScore: number, weight?: number }[]>([{ label: '', maxScore: 10 }])
   const [attach, setAttach] = React.useState<{ assignmentId: string, rubricId: string }>({ assignmentId: '', rubricId: '' })
 
   async function load(){
-    const r = await api<{ items:any[] }>(`/${schoolId}/rubrics`)
+    const [r, ov, a] = await Promise.all([
+      api<{ items:any[] }>(`/${schoolId}/rubrics`),
+      api<any>(`/${schoolId}/profile/teacher/overview`).catch(()=>null),
+      api<{ items:any[] }>(`/${schoolId}/assignments?limit=500`)
+    ])
     setItems(r.items)
+    setTeacher(ov)
+    const myClasses = new Set((ov?.classes||[]).map((x:any)=>x.class?.id))
+    setAssignments(a.items.filter((as:any)=> myClasses.has(as.classId)))
   }
   React.useEffect(()=>{ if (schoolId) load().catch(()=>{}) },[schoolId])
 
@@ -80,8 +89,11 @@ export default function RubricsPage(){
               </select>
             </label>
             <label style={{flexGrow:1}}>
-              <div className="muted">Assignment ID</div>
-              <input className="input" placeholder="ID da tarefa" value={attach.assignmentId} onChange={e=>setAttach(a=>({ ...a, assignmentId: e.target.value }))} />
+              <div className="muted">Tarefa</div>
+              <select className="select" value={attach.assignmentId} onChange={e=>setAttach(a=>({ ...a, assignmentId: e.target.value }))}>
+                <option value="">Selecione</option>
+                {assignments.map(as=> <option key={as.id} value={as.id}>{as.title}</option>)}
+              </select>
             </label>
             <button className="button" onClick={attachRubric}>Associar</button>
           </div>
@@ -98,4 +110,3 @@ export default function RubricsPage(){
     </div>
   )
 }
-
