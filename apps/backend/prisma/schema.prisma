@@ -243,6 +243,7 @@ model Grade {
   assignment Assignment? @relation(fields: [assignmentId], references: [id])
   assignmentId String?
   value     Float
+  comment   String?
   gradedAt  DateTime @default(now())
   @@index([schoolId])
 }

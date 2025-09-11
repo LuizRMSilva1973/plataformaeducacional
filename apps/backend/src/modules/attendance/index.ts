@@ -57,3 +57,23 @@ router.post('/', requireMembership('TEACHER'), rateLimit({ windowMs: 60_000, max
   const attendance = await prisma.attendance.create({ data: { ...parsed.data, schoolId: req.schoolId! } });
   res.status(201).json(attendance);
 });
+
+// Bulk upsert attendance for a specific date/class
+const bulkSchema = z.object({
+  classId: z.string(),
+  date: z.coerce.date(),
+  items: z.array(z.object({ studentUserId: z.string(), status: z.enum(['PRESENT','ABSENT','LATE']) })).min(1)
+})
+router.post('/bulk', requireMembership('TEACHER'), rateLimit({ windowMs: 60_000, max: 20, keyGenerator: (req:any) => (req.user?.id || req.ip) + req.path }), async (req, res) => {
+  const parsed = bulkSchema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+  const { classId, date, items } = parsed.data
+  const schoolId = req.schoolId!
+  // Upsert per unique (classId, studentUserId, date)
+  await prisma.$transaction(items.map(it => prisma.attendance.upsert({
+    where: { classId_studentUserId_date: { classId, studentUserId: it.studentUserId, date } as any },
+    update: { status: it.status },
+    create: { schoolId, classId, studentUserId: it.studentUserId, date, status: it.status }
+  }) as any))
+  res.json({ ok: true })
+})

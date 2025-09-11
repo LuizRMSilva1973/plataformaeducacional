@@ -48,7 +48,7 @@ router.get('/', requireMembership(), async (req, res) => {
   res.json({ items, meta: buildMeta(total, p) });
 });
 
-const gradeSchema = z.object({ studentUserId: z.string(), classId: z.string(), subjectId: z.string(), value: z.number(), assignmentId: z.string().optional() });
+const gradeSchema = z.object({ studentUserId: z.string(), classId: z.string(), subjectId: z.string(), value: z.number(), assignmentId: z.string().optional(), comment: z.string().optional() });
 router.post('/', requireMembership('TEACHER'), async (req, res) => {
   const parsed = gradeSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });

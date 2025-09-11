@@ -51,6 +51,11 @@ export default function TeacherDashboardPage(){
         <h3>Enviar mensagem para a turma</h3>
         <TeacherMessageForm classes={data?.classes||[]} />
       </div>
+
+      <div className="row" style={{gap:8, marginTop:12}}>
+        <a className="button" href="/teacher/report">Ver Relatório</a>
+        <a className="button" href="/teacher/diary">Abrir Diário</a>
+      </div>
     </div>
   )
 }
