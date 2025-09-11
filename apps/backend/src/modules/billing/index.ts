@@ -115,10 +115,10 @@ router.get('/summary', requireMembership('DIRECTOR'), async (req, res) => {
 // Reconciliation endpoint: breakdown by productType with totals/nets
 router.get('/reconcile', requireMembership('DIRECTOR'), async (req, res) => {
   const schoolId = req.schoolId!
-  const schema = z.object({ from: z.coerce.date().optional(), to: z.coerce.date().optional() })
+  const schema = z.object({ from: z.coerce.date().optional(), to: z.coerce.date().optional(), format: z.enum(['json','csv']).optional() })
   const parsed = schema.safeParse(req.query)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
-  const { from, to } = parsed.data as any
+  const { from, to, format } = parsed.data as any
   const where: any = { schoolId }
   if (from || to) where.createdAt = { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) }
 
@@ -131,7 +131,34 @@ router.get('/reconcile', requireMembership('DIRECTOR'), async (req, res) => {
     if (!groups.has(pt)) groups.set(pt, { productType: pt, entries: [] })
     groups.get(pt)!.entries.push({ entryType: it.entryType, direction: it.direction, amountCents: it.amountCents, meta: it.meta })
   }
-  const result = Array.from(groups.values()).map(g => ({ productType: g.productType, ...computeTotals(g.entries) }))
+  // GMV by paid orders in period
+  const orderWhere: any = { schoolId, status: 'PAID', ...(from || to ? { paidAt: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } } : {}) }
+  const paidOrders = await prisma.order.findMany({ where: orderWhere, include: { items: true } })
+  const overallGMV = paidOrders.reduce((s: number, o: typeof paidOrders[number])=>s+o.totalAmountCents,0)
+  const gmvByProduct = new Map<string, number>()
+  for (const o of paidOrders){
+    for (const it of o.items){
+      const curr = gmvByProduct.get(it.productType) || 0
+      gmvByProduct.set(it.productType, curr + it.priceAmountCents * (it.quantity || 1))
+    }
+  }
+  const result = Array.from(groups.values()).map(g => ({ productType: g.productType, gmvCents: gmvByProduct.get(g.productType) || 0, ...computeTotals(g.entries) }))
   const overall = computeTotals(items.map((it: any)=>({ entryType: it.entryType, direction: it.direction, amountCents: it.amountCents, meta: it.meta })))
-  res.json({ overall, byProductType: result })
+
+  if (format === 'csv'){
+    const lines = ['productType,gmvCents,schoolEarningCents,platformFeeCents,refundCents,schoolNetCents,platformNetCents']
+    const schoolEarning = (overall.totals['SCHOOL_EARNING']||0)
+    const platformFee = (overall.totals['PLATFORM_FEE']||0)
+    const refunds = (overall.totals['REFUND']||0)
+    lines.push(['ALL', overallGMV, schoolEarning, platformFee, refunds, overall.nets.schoolNet, overall.nets.platformNet].join(','))
+    for (const row of result){
+      lines.push([row.productType, row.gmvCents, row.totals['SCHOOL_EARNING']||0, row.totals['PLATFORM_FEE']||0, row.totals['REFUND']||0, row.nets.schoolNet, row.nets.platformNet].join(','))
+    }
+    const csv = lines.join('\n')
+    res.setHeader('Content-Type','text/csv; charset=utf-8')
+    res.setHeader('Content-Disposition','attachment; filename="reconcile.csv"')
+    return res.send(csv)
+  }
+
+  res.json({ overall: { ...overall, gmvCents: overallGMV }, byProductType: result })
 })
