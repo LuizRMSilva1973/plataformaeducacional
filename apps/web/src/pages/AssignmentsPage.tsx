@@ -8,6 +8,8 @@ export default function AssignmentsPage() {
   const { show } = useToast()
   const [items, setItems] = React.useState<any[]>([])
   const [classes, setClasses] = React.useState<any[]>([])
+  const [myClasses, setMyClasses] = React.useState<string[]>([])
+  const [onlyMine, setOnlyMine] = React.useState(false)
   const [subjects, setSubjects] = React.useState<any[]>([])
   const [msg, setMsg] = React.useState('')
   const [q, setQ] = React.useState('')
@@ -30,14 +32,16 @@ export default function AssignmentsPage() {
     if (subjectId) qs.set('subjectId', subjectId)
     if (dq) qs.set('q', dq)
     qs.set('order', order)
-    const [a, c, s, me] = await Promise.all([
+    const [a, c, s, me, teacher] = await Promise.all([
       api<{ items: any[] }>(`/${schoolId}/assignments?${qs.toString()}`),
       api<{ items: any[] }>(`/${schoolId}/classes?page=1&limit=200`),
       api<{ items: any[] }>(`/${schoolId}/subjects?page=1&limit=200`),
       api<{ role: string|null }>(`/${schoolId}/profile/me`).catch(()=>({ role: null } as any)),
+      api<any>(`/${schoolId}/profile/teacher/overview`).catch(()=>null),
     ])
     setItems(a.items); setClasses(c.items); setSubjects(s.items)
     setRole(me.role || undefined)
+    if (teacher?.classes) setMyClasses(teacher.classes.map((x:any)=>x.class?.id))
   }, [schoolId, classId, subjectId, dq, order, page, limit])
   React.useEffect(()=>{ load().catch(()=>{}) },[load])
 
@@ -74,7 +78,7 @@ export default function AssignmentsPage() {
         <div className="row">
           <select className="select" value={classId} onChange={e=>{ setPage(1); setClassId(e.target.value) }}>
             <option value="">(Todas) Turmas</option>
-            {classes.map((c:any)=> <option key={c.id} value={c.id}>{c.name}</option>)}
+            {(onlyMine ? classes.filter((c:any)=> myClasses.includes(c.id)) : classes).map((c:any)=> <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <select className="select" value={subjectId} onChange={e=>{ setPage(1); setSubjectId(e.target.value) }}>
             <option value="">(Todas) Disciplinas</option>
@@ -86,6 +90,11 @@ export default function AssignmentsPage() {
             <option value="desc">Mais novas</option>
           </select>
           <button className="button" onClick={exportCSV}>Exportar CSV</button>
+          {role==='TEACHER' && (
+            <label style={{display:'inline-flex',alignItems:'center',gap:6}}>
+              <input type="checkbox" checked={onlyMine} onChange={e=>{ setOnlyMine(e.target.checked); setClassId('') }} /> Minhas turmas
+            </label>
+          )}
         </div>
         <div className="row">
           <button className="button" onClick={()=> setPage(Math.max(1, page-1))}>Anterior</button>

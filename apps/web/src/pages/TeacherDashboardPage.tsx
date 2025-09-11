@@ -1,5 +1,6 @@
 import React from 'react'
 import { api, getSchoolId } from '../lib/api'
+import { useToast } from '../components/Toast'
 
 export default function TeacherDashboardPage(){
   const schoolId = getSchoolId()
@@ -45,6 +46,11 @@ export default function TeacherDashboardPage(){
           ))}
         </ul>
       </div>
+
+      <div className="card" style={{marginTop:12}}>
+        <h3>Enviar mensagem para a turma</h3>
+        <TeacherMessageForm classes={data?.classes||[]} />
+      </div>
     </div>
   )
 }
@@ -54,6 +60,38 @@ function Card({ title, value }: { title: string, value: string }){
     <div className="card">
       <div className="muted">{title}</div>
       <div style={{fontWeight:700, fontSize:22}}>{value}</div>
+    </div>
+  )
+}
+
+function TeacherMessageForm({ classes }: { classes:any[] }){
+  const schoolId = getSchoolId()
+  const { show } = useToast() as any
+  const [classId, setClassId] = React.useState('')
+  const [content, setContent] = React.useState('')
+  async function send(){
+    try{
+      if (!classId || !content.trim()) return
+      await api(`/${schoolId}/communications/messages`, { method:'POST', body: JSON.stringify({ classId, content }) })
+      setContent('')
+      show('Mensagem enviada','success')
+    }catch(e:any){ show(e?.message || 'Falha ao enviar','error') }
+  }
+  return (
+    <div className="row" style={{gap:8, alignItems:'end'}}>
+      <label>
+        <div className="muted">Turma</div>
+        <select className="select" value={classId} onChange={e=>setClassId(e.target.value)}>
+          <option value="">Selecione</option>
+          {classes.map((t:any,i:number)=> <option key={i} value={t.class?.id}>{t.class?.name} — {t.subject?.name}</option>)}
+        </select>
+      </label>
+      <label style={{flexGrow:1}}>
+        <div className="muted">Mensagem</div>
+        <input className="input" placeholder="Digite a mensagem" value={content} onChange={e=>setContent(e.target.value)} />
+      </label>
+      <button className="button" onClick={send}>Enviar</button>
+      <a className="button" href="/teacher/diary">Ir para Diário</a>
     </div>
   )
 }
@@ -97,4 +135,3 @@ function QuickGradeItem({ s, schoolId, onGraded }: { s:any, schoolId: string, on
     </li>
   )
 }
-

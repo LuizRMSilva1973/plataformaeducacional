@@ -25,6 +25,7 @@ import ClassAttendanceReport from './pages/ClassAttendanceReport';
 import ClassGradesReport from './pages/ClassGradesReport';
 import LessonsPage from './pages/LessonsPage';
 import TeacherDashboardPage from './pages/TeacherDashboardPage';
+import TeacherDiaryPage from './pages/TeacherDiaryPage';
 import MySubscriptionsPage from './pages/MySubscriptionsPage';
 import PricingPage from './pages/PricingPage';
 import StorePage from './pages/StorePage';
@@ -74,6 +75,7 @@ const router = createBrowserRouter([
       { path: 'grades', element: <GradesPage /> },
       { path: 'messages', element: <MessagesPage /> },
       { path: 'teacher', element: <TeacherDashboardPage /> },
+      { path: 'teacher/diary', element: <TeacherDiaryPage /> },
       { path: 'me/grades', element: <MyGradesPage /> },
       { path: 'me/attendance', element: <MyAttendancePage /> },
       { path: 'me/subscriptions', element: <MySubscriptionsPage /> },
