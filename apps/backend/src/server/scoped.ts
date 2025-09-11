@@ -23,6 +23,7 @@ import { router as subscriptionsRouter } from '../modules/subscriptions/index.js
 import { router as billingRouter } from '../modules/billing/index.js';
 import { router as ordersRouter } from '../modules/orders/index.js';
 import { router as rubricsRouter } from '../modules/rubrics/index.js';
+import { router as rubricsExportRouter } from '../modules/rubrics/export.js';
 
 export const router = Router();
 
@@ -50,4 +51,5 @@ router.use('/:schoolId', schoolScope, Router()
   .use('/billing', billingRouter)
   .use('/orders', ordersRouter)
   .use('/rubrics', rubricsRouter)
+  .use('/rubrics', rubricsExportRouter)
 );
