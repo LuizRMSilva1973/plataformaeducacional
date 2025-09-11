@@ -82,6 +82,7 @@ export default function FinanceReportPage(){
           <button className="button" onClick={()=>load(1)}>Aplicar</button>
           <button className="button" onClick={()=>downloadCSV(false)}>Exportar CSV (página)</button>
           <button className="button" onClick={()=>downloadCSV(true)}>Exportar CSV (todos)</button>
+          <a className="button" href={`${(import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'}/${schoolId}/billing/ledger?format=xlsx${from?`&from=${new Date(from).toISOString()}`:''}${to?`&to=${new Date(to).toISOString()}`:''}${type?`&type=${type}`:''}${buyer?`&buyerEmail=${encodeURIComponent(buyer)}`:''}${onlyRefund?`&type=REFUND`:''}${productType?`&productType=${productType}`:''}`}>Exportar Excel</a>
         </div>
         <label style={{display:'flex',alignItems:'end',gap:8}}>
           <input type="checkbox" checked={onlyRefund} onChange={e=>setOnlyRefund(e.target.checked)} /> Apenas reembolsos

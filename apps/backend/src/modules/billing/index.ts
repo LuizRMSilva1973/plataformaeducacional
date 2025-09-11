@@ -75,7 +75,7 @@ router.get('/ledger', requireMembership('DIRECTOR'), async (req, res) => {
   }
   const { totals, nets } = computeTotals(items as any)
 
-  if (format === 'csv'){
+  if (format === 'csv' || format === 'xlsx'){
     // If all=true, export full dataset ignoring pagination
     const exportAll = String((req.query as any).all || '').toLowerCase() === 'true'
     const exportWhere = { ...where, ...buyerFilter, ...productFilter } as any
@@ -83,10 +83,19 @@ router.get('/ledger', requireMembership('DIRECTOR'), async (req, res) => {
     const exportItems = exportAll ? await prisma.ledgerEntry.findMany({ where: exportWhere, include: exportInclude, orderBy: { createdAt: 'desc' } as any }) : items
     const lines = ['id,entryType,direction,amountCents,createdAt,orderId,subscriptionId,buyerEmail,buyerName,orderTotal']
     for (const it of exportItems as any){ lines.push([it.id, it.entryType, it.direction, it.amountCents, it.createdAt.toISOString(), it.orderId||'', it.subscriptionId||'', it.order?.buyer?.email||'', it.order?.buyer?.name||'', it.order?.totalAmountCents||''].join(',')) }
-    const csv = lines.join('\n')
-    res.setHeader('Content-Type','text/csv; charset=utf-8')
-    res.setHeader('Content-Disposition','attachment; filename="ledger.csv"')
-    return res.send(csv)
+    if (format === 'csv'){
+      const csv = lines.join('\n')
+      res.setHeader('Content-Type','text/csv; charset=utf-8')
+      res.setHeader('Content-Disposition','attachment; filename="ledger.csv"')
+      return res.send(csv)
+    } else {
+      function cell(v: string){ return `<Cell><Data ss:Type=\"String\">${v}</Data></Cell>` }
+      const rowsXml = lines.map((ln)=>`<Row>${ln.split(',').map(cell).join('')}</Row>`).join('')
+      const xml = `<?xml version=\"1.0\"?>\n<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"><Worksheet ss:Name=\"Ledger\"><Table>${rowsXml}</Table></Worksheet></Workbook>`
+      res.setHeader('Content-Type','application/vnd.ms-excel')
+      res.setHeader('Content-Disposition','attachment; filename="ledger.xls"')
+      return res.send(xml)
+    }
   }
   res.json({ items, totals, nets, meta: buildMeta(totalCount, p) })
 })

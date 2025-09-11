@@ -108,8 +108,10 @@ export default function FinanceReconcilePage(){
           <a className="button" href={`${(import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'}/${schoolId}/billing/timeseries?format=csv${from?`&from=${new Date(from).toISOString()}`:''}${to?`&to=${new Date(to).toISOString()}`:''}&interval=${interval}`}>Exportar CSV (série)</a>
           <a className="button" href={`${(import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'}/${schoolId}/billing/timeseries?format=xlsx${from?`&from=${new Date(from).toISOString()}`:''}${to?`&to=${new Date(to).toISOString()}`:''}&interval=${interval}`} style={{marginLeft:8}}>Exportar Excel (série)</a>
         </div>
-        <div style={{marginTop:12}}>
+        <div style={{marginTop:12, display:'grid', gridTemplateColumns:'1fr', gap:12}}>
           <LineChart data={series.map((r:any)=>({ x: r.bucket, y: r.gmvCents||0 }))} color="#2563eb" title="GMV" />
+          <LineChart data={series.map((r:any)=>({ x: r.bucket, y: r.nets?.schoolNet||0 }))} color="#16a34a" title="Líquido Escola" />
+          <LineChart data={series.map((r:any)=>({ x: r.bucket, y: r.nets?.platformNet||0 }))} color="#ef4444" title="Líquido Plataforma" />
         </div>
       </div>
     </div>
