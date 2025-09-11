@@ -74,11 +74,27 @@ function TeacherMessageForm({ classes }: { classes:any[] }){
   const { show } = useToast() as any
   const [classId, setClassId] = React.useState('')
   const [content, setContent] = React.useState('')
+  const [file, setFile] = React.useState<File|null>(null)
+  async function toBase64(file: File){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader()
+      reader.onload = ()=> resolve(String(reader.result||'').split(',')[1]||'')
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+  }
   async function send(){
     try{
       if (!classId || !content.trim()) return
-      await api(`/${schoolId}/communications/messages`, { method:'POST', body: JSON.stringify({ classId, content }) })
+      let fileId: string|undefined
+      if (file){
+        const base64 = await toBase64(file)
+        const up = await api<{ id:string }>(`/${schoolId}/files`, { method:'POST', body: JSON.stringify({ filename: file.name, mimeType: file.type||'application/octet-stream', data: String(base64) }) })
+        fileId = up.id
+      }
+      await api(`/${schoolId}/communications/messages`, { method:'POST', body: JSON.stringify({ classId, content, fileId }) })
       setContent('')
+      setFile(null)
       show('Mensagem enviada','success')
     }catch(e:any){ show(e?.message || 'Falha ao enviar','error') }
   }
@@ -97,6 +113,7 @@ function TeacherMessageForm({ classes }: { classes:any[] }){
       </label>
       <button className="button" onClick={send}>Enviar</button>
       <a className="button" href="/teacher/diary">Ir para Diário</a>
+      <input type="file" onChange={e=>setFile(e.target.files?.[0]||null)} />
     </div>
   )
 }

@@ -285,6 +285,8 @@ model Message {
   class     Class?   @relation(fields: [classId], references: [id])
   classId   String?
   content   String
+  file      StoredFile? @relation(fields: [fileId], references: [id])
+  fileId    String?
   createdAt DateTime @default(now())
   @@index([schoolId])
 }
@@ -335,6 +337,55 @@ model Lesson {
   updatedAt DateTime @updatedAt
   publishedAt DateTime?
   @@index([schoolId])
+}
+
+// Rubrics and feedback
+model Rubric {
+  id        String   @id @default(cuid())
+  school    School   @relation(fields: [schoolId], references: [id])
+  schoolId  String
+  name      String
+  criteria  RubricCriterion[]
+  assignments AssignmentRubric[]
+  createdAt DateTime @default(now())
+}
+
+model RubricCriterion {
+  id        String   @id @default(cuid())
+  rubric    Rubric   @relation(fields: [rubricId], references: [id])
+  rubricId  String
+  label     String
+  maxScore  Int
+  weight    Float?   @default(1)
+}
+
+model AssignmentRubric {
+  id          String   @id @default(cuid())
+  assignment  Assignment @relation(fields: [assignmentId], references: [id])
+  assignmentId String @unique
+  rubric      Rubric   @relation(fields: [rubricId], references: [id])
+  rubricId    String
+}
+
+model SubmissionFeedback {
+  id        String   @id @default(cuid())
+  submission Submission @relation(fields: [submissionId], references: [id])
+  submissionId String @unique
+  teacher     User     @relation(fields: [teacherUserId], references: [id])
+  teacherUserId String
+  comment   String?
+  createdAt DateTime @default(now())
+  items     SubmissionFeedbackItem[]
+}
+
+model SubmissionFeedbackItem {
+  id        String   @id @default(cuid())
+  feedback  SubmissionFeedback @relation(fields: [feedbackId], references: [id])
+  feedbackId String
+  criterion  RubricCriterion @relation(fields: [criterionId], references: [id])
+  criterionId String
+  score     Int
+  comment   String?
 }
 
 // Billing models

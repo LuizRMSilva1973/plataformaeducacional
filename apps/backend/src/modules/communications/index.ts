@@ -83,7 +83,7 @@ router.post('/announcements', requireMembership('DIRECTOR'), rateLimit({ windowM
   res.status(201).json(ann);
 });
 
-const msgSchema = z.object({ toUserId: z.string().optional(), classId: z.string().optional(), content: z.string().min(1) });
+const msgSchema = z.object({ toUserId: z.string().optional(), classId: z.string().optional(), content: z.string().min(1), fileId: z.string().optional() });
 router.post('/messages', requireMembership(), rateLimit({ windowMs: 60_000, max: 60, keyGenerator: (req:any) => (req.user?.id || req.ip) + req.path }), async (req, res) => {
   const parsed = msgSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
