@@ -1,12 +1,13 @@
 import React from 'react';
 import { api, API_URL, getSchoolId, setSchoolId } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 type School = { id: string; name: string }
 
 export function Dashboard() {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [health, setHealth] = React.useState<string>('checking...');
   const [role, setRole] = React.useState<string|undefined>(undefined)
   const [isAdmin, setIsAdmin] = React.useState<boolean>(false)
@@ -28,6 +29,9 @@ export function Dashboard() {
     api<{ role: string|null, isAdmin: boolean }>(`/${schoolId}/profile/me`).then((r)=>{
       setRole(r.role || undefined)
       setIsAdmin(!!r.isAdmin)
+      // Redirect by role: Students -> /me, Teachers -> /teacher
+      if (!r.isAdmin && r.role === 'STUDENT') navigate('/me')
+      if (!r.isAdmin && r.role === 'TEACHER') navigate('/teacher')
     }).catch(()=>{})
   }, [token, schoolId])
 
