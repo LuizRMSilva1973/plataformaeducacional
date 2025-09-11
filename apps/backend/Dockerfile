@@ -15,4 +15,7 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Ensure DB migrations are applied, then start dev server
-CMD sh -c "npm -w @edu/backend run prisma:generate && npm -w @edu/backend run prisma:deploy || true; npm -w @edu/backend run dev"
+CMD sh -c "npm -w @edu/backend run prisma:generate \
+  && npm -w @edu/backend run prisma:deploy || true \
+  && npm -w @edu/backend run prisma:seed || true; \
+  npm -w @edu/backend run dev"

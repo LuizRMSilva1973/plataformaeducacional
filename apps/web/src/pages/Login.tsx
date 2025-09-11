@@ -8,8 +8,8 @@ export function Login() {
   const navigate = useNavigate();
   const location = useLocation() as any;
   const from = location.state?.from || '/';
-  const [email, setEmail] = React.useState('admin@local');
-  const [password, setPassword] = React.useState('senha');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
   const [errorMsg, setErrorMsg] = React.useState<string>('');
 
   async function onSubmit(e: React.FormEvent) {
@@ -37,6 +37,15 @@ export function Login() {
           <input className="input" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Senha" />
           <button className="button primary" type="submit">Entrar</button>
           {errorMsg && <span className="muted">{errorMsg}</span>}
+          {!errorMsg && (
+            <div className="muted" style={{ marginTop: 8, lineHeight: 1.3 }}>
+              Exemplos (dev):<br/>
+              • admin@local / senha<br/>
+              • diretor@local / secret<br/>
+              • professor@local / secret<br/>
+              • aluno@local / secret
+            </div>
+          )}
         </div>
       </form>
     </div>

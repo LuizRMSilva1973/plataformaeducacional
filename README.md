@@ -45,6 +45,10 @@ Credenciais e Configuração Padrão (dev)
 - Admin padrão criado no boot e no seed:
   - Email: `admin@local`
   - Senha: `senha`
+- Usuários exemplo criados pelo seed (diretor, professor, aluno):
+  - Diretor: `diretor@local` / `secret`
+  - Professor: `professor@local` / `secret`
+  - Aluno: `aluno@local` / `secret`
 - Variáveis de ambiente em `apps/backend/.env`:
   - `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/edu_platform?schema=public`
   - `REDIS_URL=redis://localhost:6379`
