@@ -31,6 +31,7 @@ import AdminBillingPage from './pages/AdminBillingPage';
 import PaymentsConnectPage from './pages/PaymentsConnectPage';
 import PaymentReturnPage from './pages/PaymentReturnPage';
 import FinanceReportPage from './pages/FinanceReportPage';
+import FinanceReconcilePage from './pages/FinanceReconcilePage';
 import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import './styles.css';
@@ -63,6 +64,7 @@ const router = createBrowserRouter([
       { path: 'payments/return', element: <PaymentReturnPage /> },
       { path: 'payments/cancel', element: <PaymentReturnPage /> },
       { path: 'finance', element: <FinanceReportPage /> },
+      { path: 'finance/reconcile', element: <FinanceReconcilePage /> },
       { path: 'orders', element: <OrdersPage /> },
       { path: 'orders/:id', element: <OrderDetailPage /> },
       { path: 'enrollments', element: <EnrollmentsPage /> },

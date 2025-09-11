@@ -121,6 +121,7 @@ export function Layout() {
           {(role === 'DIRECTOR') && <NavLink to="/pricing"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="pricing"/>Preços</span></NavLink>}
           {(role === 'DIRECTOR') && <NavLink to="/payments/connect"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="billing"/>Pagamentos</span></NavLink>}
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/finance"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="report"/>Financeiro</span></NavLink>}
+          {(isAdmin || role === 'DIRECTOR') && <NavLink to="/finance/reconcile"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="report"/>Conciliação</span></NavLink>}
           {(isAdmin || role === 'DIRECTOR') && <NavLink to="/orders"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="assign"/>Pedidos</span></NavLink>}
           {(role === 'DIRECTOR' || role === 'STUDENT' || role === 'TEACHER') && <NavLink to="/store"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="store"/>Loja</span></NavLink>}
         </nav>
