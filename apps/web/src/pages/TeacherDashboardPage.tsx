@@ -113,6 +113,7 @@ function QuickGradeList({ items, onGraded }: { items:any[], onGraded: ()=>void }
 
 function QuickGradeItem({ s, schoolId, onGraded }: { s:any, schoolId: string, onGraded: ()=>void }){
   const [val, setVal] = React.useState('')
+  const [comment, setComment] = React.useState('')
   const [busy, setBusy] = React.useState(false)
   async function grade(){
     try{
@@ -121,7 +122,7 @@ function QuickGradeItem({ s, schoolId, onGraded }: { s:any, schoolId: string, on
       if (isNaN(v)) return
       // Precisa de classId e subjectId do assignment
       const ass = s.assignment
-      await api(`/${schoolId}/grades`, { method:'POST', body: JSON.stringify({ studentUserId: s.studentUserId, classId: ass.classId, subjectId: ass.subjectId, assignmentId: ass.id, value: v }) })
+      await api(`/${schoolId}/grades`, { method:'POST', body: JSON.stringify({ studentUserId: s.studentUserId, classId: ass.classId, subjectId: ass.subjectId, assignmentId: ass.id, value: v, comment: comment || undefined }) })
       onGraded()
     } finally { setBusy(false) }
   }
@@ -134,6 +135,7 @@ function QuickGradeItem({ s, schoolId, onGraded }: { s:any, schoolId: string, on
         </div>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
           <input className="input" style={{width:80}} placeholder="Nota" value={val} onChange={e=>setVal(e.target.value)} />
+          <input className="input" style={{width:220}} placeholder="Comentário (opcional)" value={comment} onChange={e=>setComment(e.target.value)} />
           <button className={`button${busy?' loading':''}`} onClick={grade}>Lançar</button>
         </div>
       </div>

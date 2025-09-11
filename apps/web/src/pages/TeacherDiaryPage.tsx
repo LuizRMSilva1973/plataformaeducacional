@@ -18,19 +18,26 @@ export default function TeacherDiaryPage(){
 
   React.useEffect(()=>{
     if (!schoolId || !classId) return
-    api<{ items:any[] }>(`/${schoolId}/enrollments?classId=${classId}&limit=200`).then(r=>{
-      setStudents(r.items.map((e:any)=>({ id: e.studentUserId, name: e.student?.name || e.studentUserId })))
-      setMarks({})
-    }).catch(()=>{})
-  },[schoolId, classId])
+    ;(async ()=>{
+      try{
+        const [enr, att] = await Promise.all([
+          api<{ items:any[] }>(`/${schoolId}/enrollments?classId=${classId}&limit=500`),
+          api<{ items:any[] }>(`/${schoolId}/attendance?classId=${classId}&dateFrom=${new Date(date).toISOString()}&dateTo=${new Date(date).toISOString()}&limit=500`).catch(()=>({ items: [] } as any))
+        ])
+        const studs = enr.items.map((e:any)=>({ id: e.studentUserId, name: e.student?.name || e.studentUserId }))
+        setStudents(studs)
+        const current: Record<string,string> = {}
+        for (const a of att.items){ current[a.studentUserId] = a.status }
+        setMarks(current)
+      }catch{}
+    })()
+  },[schoolId, classId, date])
 
   async function save(){
     try{
-      const entries = Object.entries(marks).filter(([,st])=>st)
+      const entries = Object.entries(marks).filter(([,st])=>st).map(([studentUserId, status])=>({ studentUserId, status }))
       if (!entries.length){ show('Marque pelo menos um aluno','error'); return }
-      for (const [studentUserId, status] of entries){
-        await api(`/${schoolId}/attendance`, { method:'POST', body: JSON.stringify({ classId, studentUserId, date: new Date(date), status }) })
-      }
+      await api(`/${schoolId}/attendance/bulk`, { method:'POST', body: JSON.stringify({ classId, date: new Date(date), items: entries }) })
       show('Presenças lançadas','success')
     }catch(e:any){ show(e?.message || 'Falha ao lançar presenças','error') }
   }
@@ -52,7 +59,9 @@ export default function TeacherDiaryPage(){
           <div className="muted">Data</div>
           <input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)} />
         </label>
-        <div style={{display:'flex',alignItems:'end'}}>
+        <div style={{display:'flex',alignItems:'end',gap:8}}>
+          <button className="button" onClick={()=>{ const all:Record<string,string>={}; students.forEach(s=>all[s.id]='PRESENT'); setMarks(all) }}>Todos Presentes</button>
+          <button className="button" onClick={()=>{ const all:Record<string,string>={}; students.forEach(s=>all[s.id]='ABSENT'); setMarks(all) }}>Todos Faltaram</button>
           <button className="button" onClick={save}>Salvar</button>
         </div>
       </div>
@@ -76,4 +85,3 @@ export default function TeacherDiaryPage(){
     </div>
   )
 }
-
