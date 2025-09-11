@@ -9,6 +9,7 @@ export default function FinanceReconcilePage(){
   const [to, setTo] = React.useState('')
   const [overall, setOverall] = React.useState<{ totals: Record<string, number>, nets: Nets, gmvCents?: number }|null>(null)
   const [byProduct, setByProduct] = React.useState<any[]>([])
+  const [series, setSeries] = React.useState<any[]>([])
 
   async function load(){
     const qs = new URLSearchParams()
@@ -17,6 +18,8 @@ export default function FinanceReconcilePage(){
     const r = await api<{ overall: { totals: Record<string, number>, nets: Nets, gmvCents?: number }, byProductType: any[] }>(`/${schoolId}/billing/reconcile?`+qs.toString())
     setOverall(r.overall)
     setByProduct(r.byProductType||[])
+    const ts = await api<{ items:any[] }>(`/${schoolId}/billing/timeseries?`+qs.toString())
+    setSeries(ts.items||[])
   }
 
   React.useEffect(()=>{ if (schoolId) load() },[schoolId])
@@ -72,6 +75,26 @@ export default function FinanceReconcilePage(){
         </table>
         <div style={{marginTop:8}}>
           <a className="button" href={`${(import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'}/${schoolId}/billing/reconcile?format=csv${from?`&from=${new Date(from).toISOString()}`:''}${to?`&to=${new Date(to).toISOString()}`:''}`}>Exportar CSV</a>
+        </div>
+      </div>
+
+      <div className="card" style={{marginTop:16}}>
+        <h3>Série Temporal</h3>
+        <table className="table">
+          <thead><tr><th>Período</th><th>GMV</th><th>Líquido Escola</th><th>Líquido Plataforma</th></tr></thead>
+          <tbody>
+            {series.map((r:any)=> (
+              <tr key={r.bucket}>
+                <td>{r.bucket}</td>
+                <td>{money(r.gmvCents)}</td>
+                <td>{money(r.nets?.schoolNet)}</td>
+                <td>{money(r.nets?.platformNet)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{marginTop:8}}>
+          <a className="button" href={`${(import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'}/${schoolId}/billing/timeseries?format=csv${from?`&from=${new Date(from).toISOString()}`:''}${to?`&to=${new Date(to).toISOString()}`:''}`}>Exportar CSV (série)</a>
         </div>
       </div>
     </div>

@@ -162,3 +162,83 @@ router.get('/reconcile', requireMembership('DIRECTOR'), async (req, res) => {
 
   res.json({ overall: { ...overall, gmvCents: overallGMV }, byProductType: result })
 })
+
+// Time series by interval (day|week|month) with GMV and ledger nets
+router.get('/timeseries', requireMembership('DIRECTOR'), async (req, res) => {
+  const schoolId = req.schoolId!
+  const schema = z.object({
+    from: z.coerce.date().optional(),
+    to: z.coerce.date().optional(),
+    interval: z.enum(['day','week','month']).default('day').optional(),
+    format: z.enum(['json','csv']).optional(),
+  })
+  const parsed = schema.safeParse(req.query)
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+  const { from, to, interval, format } = parsed.data as any
+  const whereOrders: any = { schoolId, status: 'PAID' }
+  if (from || to) whereOrders.paidAt = { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) }
+  const whereLedger: any = { schoolId }
+  if (from || to) whereLedger.createdAt = { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) }
+
+  const [orders, ledger] = await Promise.all([
+    prisma.order.findMany({ where: whereOrders, select: { paidAt: true, totalAmountCents: true } }),
+    prisma.ledgerEntry.findMany({ where: whereLedger, select: { createdAt: true, entryType: true, direction: true, amountCents: true, meta: true } }),
+  ])
+
+  function bucketKey(d: Date): string {
+    const dt = new Date(d)
+    if (interval === 'month') {
+      return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,'0')}`
+    }
+    if (interval === 'week') {
+      // Simple ISO week approximation: YYYY-Www based on first Thursday
+      const tmp = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate()))
+      const dayNum = (tmp.getUTCDay() + 6) % 7
+      tmp.setUTCDate(tmp.getUTCDate() - dayNum + 3)
+      const firstThursday = new Date(Date.UTC(tmp.getUTCFullYear(),0,4))
+      const week = 1 + Math.round(((tmp.getTime() - firstThursday.getTime())/86400000 - 3) / 7)
+      return `${tmp.getUTCFullYear()}-W${String(week).padStart(2,'0')}`
+    }
+    // day
+    return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,'0')}-${String(dt.getUTCDate()).padStart(2,'0')}`
+  }
+
+  const gmvByBucket = new Map<string, number>()
+  for (const o of orders){
+    const key = bucketKey(o.paidAt || new Date())
+    gmvByBucket.set(key, (gmvByBucket.get(key)||0) + o.totalAmountCents)
+  }
+
+  // Group ledger by bucket then compute totals/nets per bucket
+  const groups = new Map<string, { entries: any[] }>()
+  for (const it of ledger){
+    const key = bucketKey(it.createdAt)
+    if (!groups.has(key)) groups.set(key, { entries: [] })
+    groups.get(key)!.entries.push({ entryType: it.entryType, direction: it.direction, amountCents: it.amountCents, meta: it.meta })
+  }
+
+  const buckets = Array.from(new Set<string>([...gmvByBucket.keys(), ...groups.keys()])).sort()
+  const rows = buckets.map(b => {
+    const entries = groups.get(b)?.entries || []
+    const { totals, nets } = computeTotals(entries as any)
+    return {
+      bucket: b,
+      gmvCents: gmvByBucket.get(b) || 0,
+      totals,
+      nets,
+    }
+  })
+
+  if (format === 'csv'){
+    const lines = ['bucket,gmvCents,schoolEarningCents,platformFeeCents,refundCents,schoolNetCents,platformNetCents']
+    for (const r of rows){
+      lines.push([r.bucket, r.gmvCents, r.totals['SCHOOL_EARNING']||0, r.totals['PLATFORM_FEE']||0, r.totals['REFUND']||0, r.nets.schoolNet, r.nets.platformNet].join(','))
+    }
+    const csv = lines.join('\n')
+    res.setHeader('Content-Type','text/csv; charset=utf-8')
+    res.setHeader('Content-Disposition','attachment; filename="timeseries.csv"')
+    return res.send(csv)
+  }
+
+  res.json({ items: rows })
+})
