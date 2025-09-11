@@ -35,3 +35,38 @@ router.post('/schools', requireAdmin, async (req, res) => {
   const school = await prisma.school.create({ data: { name: parsed.data.name } });
   res.status(201).json(school);
 });
+
+// Billing: platform fee config and overview
+router.get('/billing/config', requireAdmin, async (_req, res) => {
+  const config = await prisma.appConfig.upsert({
+    where: { id: 'config' },
+    update: {},
+    create: { id: 'config', platformFeePercent: 10, defaultPaymentProvider: 'MANUAL' },
+  });
+  res.json(config);
+});
+
+router.put('/billing/config', requireAdmin, async (req, res) => {
+  const schema = z.object({ platformFeePercent: z.coerce.number().min(0).max(100), defaultPaymentProvider: z.enum(['MANUAL','STRIPE','MERCADO_PAGO']).optional() });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const config = await prisma.appConfig.upsert({
+    where: { id: 'config' },
+    update: { platformFeePercent: parsed.data.platformFeePercent, ...(parsed.data.defaultPaymentProvider ? { defaultPaymentProvider: parsed.data.defaultPaymentProvider } : {}) },
+    create: { id: 'config', platformFeePercent: parsed.data.platformFeePercent, defaultPaymentProvider: parsed.data.defaultPaymentProvider || 'MANUAL' },
+  });
+  res.json(config);
+});
+
+router.get('/billing/overview', requireAdmin, async (_req, res) => {
+  const [orders, fees, earnings] = await Promise.all([
+    prisma.order.findMany({ where: { status: 'PAID' }, select: { totalAmountCents: true } }),
+    prisma.ledgerEntry.findMany({ where: { entryType: 'PLATFORM_FEE' }, select: { amountCents: true } }),
+    prisma.ledgerEntry.findMany({ where: { entryType: 'SCHOOL_EARNING' }, select: { amountCents: true } }),
+  ]);
+  const sum = (arr: { amountCents?: number; totalAmountCents?: number }[], key: 'amountCents'|'totalAmountCents') => arr.reduce((a,b)=>a+(b[key]||0),0);
+  const gmv = sum(orders as any, 'totalAmountCents');
+  const platformRevenue = sum(fees as any, 'amountCents');
+  const schoolsRevenue = sum(earnings as any, 'amountCents');
+  res.json({ gmv, platformRevenue, schoolsRevenue });
+});

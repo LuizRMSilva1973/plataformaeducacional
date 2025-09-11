@@ -260,7 +260,7 @@ Observação: em ambiente de desenvolvimento as rotas de `/auth/dev-register` ex
 Como executar (local)
 1) Infraestrutura: `cd infra && docker compose up -d`
 2) Backend:
-   - `cd apps/backend && cp .env.example .env`
+  - `cd apps/backend && cp .env.example .env`
    - `npx prisma generate`
    - `npx prisma migrate dev --name init`
    - (opcional) `npm run prisma:seed`
@@ -338,6 +338,108 @@ Obrigado por contribuir! Siga as orientações abaixo para manter a qualidade do
 - Se alterar o backend, adicione/ajuste testes em `apps/backend/test` (Vitest):
   - `npm -w @edu/backend run test` ou `test:watch`.
 - Atualize README e exemplos (`docs/API.http`) quando modificar rotas/comportamentos.
+
+## Assinaturas, Preços e Cobranças (beta)
+
+- Conceito:
+  - Admin define o percentual da plataforma sobre os ganhos das escolas (ex.: 10%).
+  - Diretores definem preços para Assinatura da Escola (recorrente) e Cursos/Disciplinas (único ou recorrente).
+  - Alunos/compradores veem a Loja da escola e concluem compras. No desenvolvimento, o pagamento é simulado.
+
+- Backend (APIs novas):
+  - Admin:
+    - `GET /admin/billing/config` — lê percentual da plataforma.
+    - `PUT /admin/billing/config { platformFeePercent }` — atualiza percentual.
+    - `GET /admin/billing/overview` — métricas: GMV, receita plataforma, receita escolas.
+  - Diretor (por escola):
+    - `GET /:schoolId/pricing` — lista preços.
+    - `POST /:schoolId/pricing` — cria/atualiza preço `{ productType, productRefId, amountCents, interval }`.
+    - `PATCH /:schoolId/pricing/:priceId` — altera preço/ativo.
+    - `DELETE /:schoolId/pricing/:priceId` — desativa preço.
+  - Loja/Checkout (por escola):
+    - `GET /:schoolId/checkout/store` — itens disponíveis.
+    - `POST /:schoolId/checkout/order` — cria pedido a partir de `priceIds`.
+    - `POST /:schoolId/checkout/simulate-pay/:orderId` — confirma pagamento (apenas dev), gera lançamentos (fee e repasse) e ativa assinaturas recorrentes.
+
+- Web (páginas novas):
+  - Admin: `Admin: Cobranças` — define o percentual e vê métricas.
+  - Diretor: `Preços` — gerencia preços de assinatura e cursos.
+  - Loja: `Loja` — lista produtos e checkout (Stripe/Mercado Pago/Manual dev).
+  - Pedidos: `Pedidos` — listagem, detalhe, cancelamento e estorno (parcial/total).
+  - Financeiro: `Financeiro` — ledger com filtros e exportações CSV.
+  - Assinaturas (Aluno): `Minhas Assinaturas` — gerir cancelamento/retomada.
+
+- Observações:
+  - Integração com provedor de pagamento (Stripe Connect / Mercado Pago Marketplace / PagSeguro) ainda não habilitada; o endpoint de pagamento atual é simulado para desenvolvimento.
+  - Novas entidades Prisma: `Price`, `Order`, `OrderItem`, `Payment`, `Subscription`, `LedgerEntry`, `AppConfig` e enums relacionados.
+  - Execute `npm -w @edu/backend run prisma:generate` e aplique migrations quando conectar a um Postgres.
+
+### Fluxos de pagamento
+
+- Stripe Connect:
+  - Admin define `defaultPaymentProvider=STRIPE` em `Admin: Cobranças`.
+  - Diretor conecta a escola via `Pagamentos` (onboarding Express: `POST /payments/:schoolId/stripe/account-link`).
+  - Checkout: divide itens em 2 checkouts (assinaturas vs avulsos) quando necessário. Split de receita via `application_fee_percent` (subscriptions) e `application_fee_amount` (one-time).
+  - Webhook: `POST /payments/stripe/webhook` (raw). Eventos: `checkout.session.completed`, `payment_intent.succeeded`, `invoice.payment_succeeded` (renovações) — confirmam pedidos e atualizam assinaturas/ledger.
+
+- Mercado Pago (Marketplace):
+  - Admin define `defaultPaymentProvider=MERCADO_PAGO`.
+  - Diretor conecta conta via OAuth (`GET /payments/:schoolId/mercadopago/oauth-url`) e callback (`/payments/mercadopago/oauth/callback`).
+  - Checkout: para carrinho só recorrente cria Preapproval; para avulsos cria Preference; em carrinho misto retorna `checkoutUrls` múltiplas.
+  - Webhook: `POST /payments/mercadopago/webhook` com validação por lookup (`/v1/payments/{id}`) e assinatura opcional (`MP_WEBHOOK_VALIDATE=strict` + `MP_WEBHOOK_SECRET`).
+
+### Ledger e Relatórios
+
+- API: `GET /:schoolId/billing/ledger`
+  - Filtros: `from`, `to`, `type`, `direction`, `buyerEmail`, `productType`, `detailed=true`, `page`, `limit`.
+  - Export CSV: `format=csv` e `all=true` para exportar todo o resultado sem paginação.
+  - Retorno inclui `totals` (por tipo), `nets` (`schoolNet`, `platformNet`) e `meta` de paginação.
+- UI: mostra cartões (Total, Receita, Taxa, Reembolsos, Líquidos), tabela com “Líquido (linha)”, “Produto”, “Descrição” (nomes amigáveis), “Pedido” (link), “Comprador” e rodapé com totais da página.
+
+### Pedidos
+
+- API: `GET /:schoolId/orders`, `GET /:schoolId/orders/:id`, `POST /:schoolId/orders/:id/cancel`, `POST /:schoolId/orders/:id/refund` (parcial/total), `GET /:schoolId/orders/:id/receipt.pdf` (recibo simples em PDF).
+- UI: listagem com filtros por status/email, detalhe com itens, cancelamento, estorno (campo valor) e botão “Baixar recibo (PDF)”.
+
+### Seeds (demo)
+
+- Usuários:
+  - Admin: `admin@local / senha`
+  - Diretor: `diretor@local / secret`
+  - Professor: `professor@local / secret`
+  - Aluno: `aluno@local / secret`
+- Escola: `seed-school`
+- Preços demo:
+  - Assinatura mensal da escola: R$ 29,90
+  - Curso avulso (Matemática): R$ 19,90
+
+Seed adicional para dados de Financeiro/Pedidos (paginados):
+
+- `npm -w @edu/backend run seed:finance` — cria ~60 pedidos pagos (metade assinaturas, metade cursos) para testar filtros, paginação e exportações do Financeiro e Pedidos.
+
+### Variáveis de ambiente (backend)
+
+- Stripe:
+  - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_RETURN_URL`, `STRIPE_REFRESH_URL`
+- Mercado Pago:
+  - `MP_CLIENT_ID`, `MP_CLIENT_SECRET`, `MP_REDIRECT_URI`, `MP_APP_ACCESS_TOKEN`, opcional `MP_WEBHOOK_VALIDATE=strict`, `MP_WEBHOOK_SECRET`.
+- Gerais:
+  - `CHECKOUT_SUCCESS_URL`, `CHECKOUT_CANCEL_URL` (defaults: `/payments/return`, `/payments/cancel`).
+
+### Testes e verificação
+
+- Typecheck:
+  - `npm -w @edu/backend run typecheck`
+  - `npm -w @edu/web run typecheck`
+- Testes (modo manual, sem rede):
+  - `npm -w @edu/backend run test`
+  - Inclui: split checkout, refund total/parcial, filtros de pedidos.
+- Manual:
+  1) Admin define provedor e taxa em `Admin: Cobranças`.
+  2) Diretor conecta Stripe/MP em `Pagamentos`.
+  3) Diretor cria preços em `Preços` (assinatura/curso).
+  4) Aluno compra em `Loja`. Se houver 2 checkouts, o retorno sequencia automaticamente.
+  5) Conferir `Pedidos` e `Financeiro` (filtros, CSV, totais, líquidos). Estornar no detalhe do pedido.
 
 4) Testes manuais (UI)
 - Verifique login/logout, seleção de escola, e CRUD básico nas páginas.

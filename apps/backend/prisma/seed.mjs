@@ -130,6 +130,22 @@ async function main() {
     student: { email: 'aluno@local', password: 'secret' },
     schoolId: school.id,
   })
+
+  // Demo: preços (assinatura mensal da escola e curso avulso)
+  await prisma.price.upsert({
+    where: { id: 'seed-price-subscription' },
+    update: {},
+    create: {
+      id: 'seed-price-subscription', schoolId: school.id, productType: 'SCHOOL_MEMBERSHIP', productRefId: 'school', amountCents: 2990, currency: 'BRL', interval: 'MONTHLY', active: true
+    },
+  }).catch(()=>{})
+  await prisma.price.upsert({
+    where: { id: 'seed-price-course-math' },
+    update: {},
+    create: {
+      id: 'seed-price-course-math', schoolId: school.id, productType: 'SUBJECT_COURSE', productRefId: math.id, amountCents: 1990, currency: 'BRL', interval: 'ONE_TIME', active: true
+    },
+  }).catch(()=>{})
 }
 
 main()
@@ -140,4 +156,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect()
   })
-

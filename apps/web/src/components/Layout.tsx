@@ -87,6 +87,9 @@ export function Layout() {
       case 'report': return <svg {...common}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 12h10M7 8h10M7 16h6"/></svg>
       case 'school': return <svg {...common}><path d="M4 10l8-6 8 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M12 22V12"/></svg>
       case 'lesson': return <svg {...common}><path d="M4 19.5V4.5A2.5 2.5 0 0 1 6.5 2H14l6 6v11.5A2.5 2.5 0 0 1 17.5 22h-11A2.5 2.5 0 0 1 4 19.5z"/><path d="M12 18h5"/></svg>
+      case 'pricing': return <svg {...common}><path d="M3 3h18v4H3z"/><path d="M3 7v14h18"/><path d="M8 13h3v6H8zM14 10h3v9h-3z"/></svg>
+      case 'store': return <svg {...common}><path d="M6 2l1 5h10l1-5"/><path d="M3 7h18v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M16 11a4 4 0 0 1-8 0"/></svg>
+      case 'billing': return <svg {...common}><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
       default: return null
     }
   }
@@ -112,7 +115,14 @@ export function Layout() {
           {(isAdmin || role === 'DIRECTOR' || role === 'TEACHER' || role === 'STUDENT') && <NavLink to="/messages"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="messages"/>Mensagens</span></NavLink>}
           {(role === 'STUDENT') && <NavLink to="/me/grades"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="grades"/>Minhas Notas</span></NavLink>}
           {(role === 'STUDENT') && <NavLink to="/me/attendance"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="attendance"/>Minhas Presenças</span></NavLink>}
+          {(role === 'STUDENT') && <NavLink to="/me/subscriptions"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="billing"/>Minhas Assinaturas</span></NavLink>}
           {isAdmin && <NavLink to="/admin/schools"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="school"/>Admin: Escolas</span></NavLink>}
+          {isAdmin && <NavLink to="/admin/billing"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="billing"/>Admin: Cobranças</span></NavLink>}
+          {(role === 'DIRECTOR') && <NavLink to="/pricing"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="pricing"/>Preços</span></NavLink>}
+          {(role === 'DIRECTOR') && <NavLink to="/payments/connect"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="billing"/>Pagamentos</span></NavLink>}
+          {(isAdmin || role === 'DIRECTOR') && <NavLink to="/finance"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="report"/>Financeiro</span></NavLink>}
+          {(isAdmin || role === 'DIRECTOR') && <NavLink to="/orders"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="assign"/>Pedidos</span></NavLink>}
+          {(role === 'DIRECTOR' || role === 'STUDENT' || role === 'TEACHER') && <NavLink to="/store"><span style={{display:'inline-flex',alignItems:'center',gap:8}}><Icon name="store"/>Loja</span></NavLink>}
         </nav>
       </aside>
       <main className="content">

@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import { router as adminRouter } from '../modules/admin/index.js';
+import { router as paymentsRouter } from '../modules/payments/index.js';
+import { stripeWebhookHandler } from '../modules/payments/stripeWebhook.js';
 import { router as authRouter } from '../modules/auth/index.js';
 import { router as scopedRouter } from '../server/scoped.js';
 import { router as profileRootRouter } from '../modules/profile/root.js';
@@ -15,6 +17,12 @@ export function createServer() {
   app.use(requestId);
   app.use(requestLogger);
   const corsOrigin = process.env.CORS_ORIGIN || '*';
+  // Stripe webhook must receive raw body — mount before json()
+  app.post('/payments/stripe/webhook', express.raw({ type: 'application/json' }) as any, (req, res) => {
+    // attach raw body for handler
+    ;(req as any).rawBody = (req as any).body
+    return stripeWebhookHandler(req, res)
+  });
   // Allow all in dev by default, or restrict to configured origin(s)
   if (corsOrigin === '*') {
     app.use(cors());
@@ -31,6 +39,15 @@ export function createServer() {
     }));
   }
   app.use(express.json());
+
+  // Webhooks and payment callbacks that may require raw body or no auth would be mounted here if needed
+  // For now, payment OAuth callback is JSON and mounted without auth
+  // Mercado Pago webhook should also accept raw body for signature validation
+  app.post('/payments/mercadopago/webhook', express.raw({ type: '*/*' }) as any, (req, res, next) => {
+    ;(req as any).rawBody = (req as any).body
+    next()
+  }, paymentsRouter)
+  app.use('/payments', paymentsRouter);
 
   app.get('/health', async (_req, res) => {
     try {

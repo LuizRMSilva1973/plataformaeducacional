@@ -15,6 +15,11 @@ import { router as communicationsRouter } from '../modules/communications/index.
 import { router as profileRouter } from '../modules/profile/index.js';
 import { router as lessonsRouter } from '../modules/lessons/index.js';
 import { router as filesRouter } from '../modules/files/index.js';
+import { router as pricingRouter } from '../modules/pricing/index.js';
+import { router as checkoutRouter } from '../modules/checkout/index.js';
+import { router as subscriptionsRouter } from '../modules/subscriptions/index.js';
+import { router as billingRouter } from '../modules/billing/index.js';
+import { router as ordersRouter } from '../modules/orders/index.js';
 
 export const router = Router();
 
@@ -34,4 +39,9 @@ router.use('/:schoolId', schoolScope, Router()
   .use('/communications', communicationsRouter)
   .use('/lessons', lessonsRouter)
   .use('/files', filesRouter)
+  .use('/pricing', pricingRouter)
+  .use('/checkout', checkoutRouter)
+  .use('/subscriptions', subscriptionsRouter)
+  .use('/billing', billingRouter)
+  .use('/orders', ordersRouter)
 );

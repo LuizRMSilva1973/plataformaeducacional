@@ -24,6 +24,15 @@ import MyAttendancePage from './pages/MyAttendancePage';
 import ClassAttendanceReport from './pages/ClassAttendanceReport';
 import ClassGradesReport from './pages/ClassGradesReport';
 import LessonsPage from './pages/LessonsPage';
+import MySubscriptionsPage from './pages/MySubscriptionsPage';
+import PricingPage from './pages/PricingPage';
+import StorePage from './pages/StorePage';
+import AdminBillingPage from './pages/AdminBillingPage';
+import PaymentsConnectPage from './pages/PaymentsConnectPage';
+import PaymentReturnPage from './pages/PaymentReturnPage';
+import FinanceReportPage from './pages/FinanceReportPage';
+import OrdersPage from './pages/OrdersPage';
+import OrderDetailPage from './pages/OrderDetailPage';
 import './styles.css';
 
 import ErrorPage from './components/ErrorPage';
@@ -47,6 +56,15 @@ const router = createBrowserRouter([
       { path: 'announcements', element: <AnnouncementsPage /> },
       { path: 'lessons', element: <LessonsPage /> },
       { path: 'admin/schools', element: <AdminSchoolsPage /> },
+      { path: 'admin/billing', element: <AdminBillingPage /> },
+      { path: 'pricing', element: <PricingPage /> },
+      { path: 'store', element: <StorePage /> },
+      { path: 'payments/connect', element: <PaymentsConnectPage /> },
+      { path: 'payments/return', element: <PaymentReturnPage /> },
+      { path: 'payments/cancel', element: <PaymentReturnPage /> },
+      { path: 'finance', element: <FinanceReportPage /> },
+      { path: 'orders', element: <OrdersPage /> },
+      { path: 'orders/:id', element: <OrderDetailPage /> },
       { path: 'enrollments', element: <EnrollmentsPage /> },
       { path: 'teaching', element: <TeachingPage /> },
       { path: 'attendance', element: <AttendancePage /> },
@@ -54,6 +72,7 @@ const router = createBrowserRouter([
       { path: 'messages', element: <MessagesPage /> },
       { path: 'me/grades', element: <MyGradesPage /> },
       { path: 'me/attendance', element: <MyAttendancePage /> },
+      { path: 'me/subscriptions', element: <MySubscriptionsPage /> },
       { path: 'reports/attendance', element: <ClassAttendanceReport /> },
       { path: 'reports/grades', element: <ClassGradesReport /> },
     ],

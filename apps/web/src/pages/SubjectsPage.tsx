@@ -17,6 +17,14 @@ export default function SubjectsPage() {
   }, [schoolId])
   React.useEffect(()=>{ if (schoolId) load().catch(()=>{}) },[schoolId, load])
   React.useEffect(()=>{
+    // Scroll to subject if hash present
+    const hash = location.hash
+    if (hash && hash.startsWith('#subject-')){
+      const el = document.querySelector(hash)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  },[])
+  React.useEffect(()=>{
     function onChange(){ const id = getSchoolId(); if (id) setSchoolIdState(id) }
     window.addEventListener('school-change', onChange)
     return ()=> window.removeEventListener('school-change', onChange)
@@ -75,7 +83,7 @@ function SubjectItem({ item, onDeleted, onUpdated }: { item:any, onDeleted:(id:s
     } finally { if (btn) btn?.classList.remove('loading') }
   }
   return (
-    <li>
+    <li id={`subject-${item.id}`}>
       {!edit ? (
         <>
           {item.name}

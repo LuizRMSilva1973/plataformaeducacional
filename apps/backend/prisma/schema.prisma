@@ -32,6 +32,58 @@ enum ContentType {
   FILE
 }
 
+// Billing/commerce enums
+enum BillingInterval {
+  ONE_TIME
+  MONTHLY
+  YEARLY
+}
+
+enum ProductType {
+  SCHOOL_MEMBERSHIP
+  SUBJECT_COURSE
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  INCOMPLETE
+}
+
+enum LedgerType {
+  PLATFORM_FEE
+  SCHOOL_EARNING
+  REFUND
+  ADJUSTMENT
+}
+
+enum LedgerDirection {
+  DEBIT
+  CREDIT
+}
+
+enum PaymentProviderKind {
+  MANUAL
+  STRIPE
+  MERCADO_PAGO
+}
+
 model User {
   id        String        @id @default(cuid())
   email     String        @unique
@@ -71,6 +123,16 @@ model School {
   files      StoredFile[]
   auditLogs  AuditLog[]
   lessons    Lesson[]
+
+  // Billing relations
+  prices     Price[]
+  orders     Order[]
+  subscriptions Subscription[]
+  ledger     LedgerEntry[]
+
+  // Payment provider accounts
+  stripeAccountId String?
+  mpUserId        String?
 }
 
 model Membership {
@@ -271,5 +333,102 @@ model Lesson {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   publishedAt DateTime?
+  @@index([schoolId])
+}
+
+// Billing models
+
+model AppConfig {
+  id        String   @id @default("config")
+  platformFeePercent Float @default(10.0)
+  defaultPaymentProvider PaymentProviderKind @default(MANUAL)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Price {
+  id        String   @id @default(cuid())
+  school    School   @relation(fields: [schoolId], references: [id])
+  schoolId  String
+  productType ProductType
+  productRefId String
+  amountCents Int
+  currency  String   @default("BRL")
+  interval  BillingInterval @default(MONTHLY)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([schoolId])
+  @@index([schoolId, productType, productRefId])
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  school    School   @relation(fields: [schoolId], references: [id])
+  schoolId  String
+  buyer     User     @relation(fields: [buyerUserId], references: [id])
+  buyerUserId String
+  status    OrderStatus @default(PENDING)
+  totalAmountCents Int  @default(0)
+  currency  String   @default("BRL")
+  items     OrderItem[]
+  payment   Payment?
+  createdAt DateTime @default(now())
+  paidAt    DateTime?
+  @@index([schoolId])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   String
+  productType ProductType
+  productRefId String
+  priceAmountCents Int
+  quantity  Int      @default(1)
+  interval  BillingInterval @default(ONE_TIME)
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   String   @unique
+  provider  String   @default("manual")
+  providerPaymentId String?
+  status    PaymentStatus @default(PENDING)
+  raw       Json?
+  createdAt DateTime @default(now())
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  school    School   @relation(fields: [schoolId], references: [id])
+  schoolId  String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  productType ProductType
+  productRefId String
+  status    SubscriptionStatus @default(INCOMPLETE)
+  currentPeriodEnd DateTime?
+  cancelAtPeriodEnd Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([schoolId])
+  @@unique([schoolId, userId, productType, productRefId])
+}
+
+model LedgerEntry {
+  id        String   @id @default(cuid())
+  school    School   @relation(fields: [schoolId], references: [id])
+  schoolId  String
+  order     Order?   @relation(fields: [orderId], references: [id])
+  orderId   String?
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String?
+  entryType LedgerType
+  direction LedgerDirection
+  amountCents Int
+  meta      Json?
+  createdAt DateTime @default(now())
   @@index([schoolId])
 }
