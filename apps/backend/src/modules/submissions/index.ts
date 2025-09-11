@@ -37,3 +37,16 @@ router.post('/', requireMembership('STUDENT'), async (req, res) => {
   const submission = await prisma.submission.create({ data: { assignmentId: parsed.data.assignmentId, studentUserId: req.user!.id } });
   res.status(201).json(submission);
 });
+
+// Fetch single submission with assignment and rubric (if attached)
+router.get('/:id', requireMembership(), async (req, res) => {
+  const schoolId = req.schoolId!
+  const id = req.params.id
+  const sub = await prisma.submission.findUnique({ where: { id }, include: { student: { select: { id: true, name: true, email: true } }, assignment: { include: { class: { select: { id: true, name: true } }, subject: { select: { id: true, name: true } }, AssignmentRubric: { include: { rubric: { include: { criteria: true } } } } } }, } as any })
+  if (!sub) return res.status(404).json({ error: 'Submission not found' })
+  // Ensure submission is from same school
+  // assignment has schoolId
+  const a = sub.assignment as any
+  if (!a || a.schoolId !== schoolId) return res.status(403).json({ error: 'Forbidden' })
+  res.json(sub)
+})
