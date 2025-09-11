@@ -84,8 +84,10 @@ export default function FinanceReconcilePage(){
             ))}
           </tbody>
         </table>
-        <div style={{marginTop:8}}>
+        <div style={{marginTop:8, display:'flex', gap:8}}>
           <a className="button" href={`${(import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'}/${schoolId}/billing/reconcile?format=csv${from?`&from=${new Date(from).toISOString()}`:''}${to?`&to=${new Date(to).toISOString()}`:''}`}>Exportar CSV</a>
+          <a className="button" href={`${(import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'}/${schoolId}/billing/reconcile?format=xlsx${from?`&from=${new Date(from).toISOString()}`:''}${to?`&to=${new Date(to).toISOString()}`:''}`}>Exportar Excel</a>
+          <a className="button" href={`${(import.meta as any).env?.VITE_API_URL || 'http://localhost:3000'}/${schoolId}/billing/monthly-report.pdf?year=${(from?new Date(from):new Date()).getFullYear()}&month=${String((from?new Date(from):new Date()).getMonth()+1)}`}>Baixar PDF mensal</a>
         </div>
       </div>
 
@@ -137,7 +139,7 @@ function Bar({ value, max, color }: { value: number, max: number, color: string 
 }
 
 function LineChart({ data, color, title }: { data: { x: string, y: number }[], color: string, title: string }){
-  const w = 600, h = 160, p = 20
+  const w = 600, h = 180, p = 30
   const ys = data.map(d=>d.y)
   const max = Math.max(1, ...ys)
   const pts = data.map((d,i)=>{
@@ -150,6 +152,11 @@ function LineChart({ data, color, title }: { data: { x: string, y: number }[], c
       <div className="muted">{title}</div>
       <svg width={w} height={h} style={{background:'#fff', border:'1px solid #e5e7eb'}}>
         <polyline fill="none" stroke={color} strokeWidth="2" points={pts} />
+        {data.map((d,i)=>{
+          const x = p + (i*(w-2*p))/Math.max(1,(data.length-1))
+          const y = h - p - (d.y/max)*(h-2*p)
+          return <g key={i}><circle cx={x} cy={y} r={3} fill={color}><title>{`${d.x}: R$ ${(d.y/100).toLocaleString('pt-BR',{minimumFractionDigits:2})}`}</title></circle></g>
+        })}
       </svg>
     </div>
   )

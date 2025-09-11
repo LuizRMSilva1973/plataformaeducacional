@@ -270,3 +270,67 @@ router.get('/timeseries', requireMembership('DIRECTOR'), async (req, res) => {
 
   res.json({ items: rows })
 })
+
+// Monthly PDF report (summary)
+router.get('/monthly-report.pdf', requireMembership('DIRECTOR'), async (req, res) => {
+  const schoolId = req.schoolId!
+  const schema = z.object({ year: z.coerce.number().int().min(1970), month: z.coerce.number().int().min(1).max(12) })
+  const parsed = schema.safeParse(req.query)
+  if (!parsed.success) return res.status(400).send('Parâmetros inválidos')
+  const { year, month } = parsed.data
+  const from = new Date(Date.UTC(year, month-1, 1))
+  const to = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999))
+
+  const whereOrders: any = { schoolId, status: 'PAID', paidAt: { gte: from, lte: to } }
+  const whereLedger: any = { schoolId, createdAt: { gte: from, lte: to } }
+  const [orders, ledger, school] = await Promise.all([
+    prisma.order.findMany({ where: whereOrders, include: { items: true } }),
+    prisma.ledgerEntry.findMany({ where: whereLedger, include: { order: { include: { items: true } }, subscription: { select: { productType: true, productRefId: true } } } }),
+    prisma.school.findUnique({ where: { id: schoolId }, select: { name: true } })
+  ])
+  const gmv = orders.reduce((s: number, o: typeof orders[number])=>s+o.totalAmountCents,0)
+  const totals = computeTotals(ledger.map((it:any)=>({ entryType: it.entryType, direction: it.direction, amountCents: it.amountCents, meta: it.meta })))
+  const byProduct = new Map<string, any>()
+  for (const it of ledger as any[]){
+    const pt = it?.subscription?.productType || (it?.order?.items?.[0]?.productType) || 'UNKNOWN'
+    const curr = byProduct.get(pt) || { entries: [] }
+    curr.entries.push({ entryType: it.entryType, direction: it.direction, amountCents: it.amountCents, meta: it.meta })
+    byProduct.set(pt, curr)
+  }
+  const byProdRows = Array.from(byProduct.keys()).map(pt=>({ productType: pt, ...computeTotals(byProduct.get(pt).entries) }))
+
+  function esc(str: string){ return str.replace(/[()\\]/g, s => s === '(' ? '\\(' : s === ')' ? '\\)' : '\\' ) }
+  const lines: string[] = []
+  lines.push(`Relatório Mensal — ${String(month).padStart(2,'0')}/${year}`)
+  lines.push(`Escola: ${school?.name || ''}`)
+  lines.push(`Período: ${from.toISOString().slice(0,10)} a ${to.toISOString().slice(0,10)}`)
+  lines.push(`GMV (bruto): R$ ${(gmv/100).toFixed(2)}`)
+  lines.push(`Receita Escola: R$ ${((totals.totals['SCHOOL_EARNING']||0)/100).toFixed(2)}`)
+  lines.push(`Taxas Plataforma: R$ ${((totals.totals['PLATFORM_FEE']||0)/100).toFixed(2)}`)
+  lines.push(`Reembolsos: R$ ${((totals.totals['REFUND']||0)/100).toFixed(2)}`)
+  lines.push(`Líquido Escola: R$ ${((totals.nets.schoolNet||0)/100).toFixed(2)}`)
+  lines.push(`Líquido Plataforma: R$ ${((totals.nets.platformNet||0)/100).toFixed(2)}`)
+  lines.push('')
+  lines.push('Por Tipo de Produto:')
+  for (const r of byProdRows){
+    lines.push(` - ${r.productType}: Escola R$ ${((r.totals['SCHOOL_EARNING']||0)/100).toFixed(2)}, Plataforma R$ ${((r.totals['PLATFORM_FEE']||0)/100).toFixed(2)}, Reembolsos R$ ${((r.totals['REFUND']||0)/100).toFixed(2)}`)
+  }
+
+  let y = 780
+  const content = [ 'BT','/F1 12 Tf', ...lines.flatMap((t)=>{ const arr = [`1 0 0 1 40 ${y} Tm`, `(${esc(t)}) Tj`]; y -= 16; return arr }), 'ET' ].join('\n')
+  const parts: string[] = []
+  parts.push('%PDF-1.4')
+  parts.push('1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj')
+  parts.push('2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj')
+  parts.push('3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj')
+  const len = Buffer.byteLength(content, 'utf8')
+  parts.push(`4 0 obj << /Length ${len} >> stream`)
+  parts.push(content)
+  parts.push('endstream endobj')
+  parts.push('5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj')
+  const body = parts.join('\n')
+  const trailer = `trailer << /Root 1 0 R /Size 6 >>\nstartxref\n${body.length+1}\n%%EOF`
+  res.setHeader('Content-Type','application/pdf')
+  res.setHeader('Content-Disposition', `attachment; filename=monthly-report-${year}-${String(month).padStart(2,'0')}.pdf`)
+  return res.send(Buffer.from(body+'\n'+trailer, 'utf8'))
+})
