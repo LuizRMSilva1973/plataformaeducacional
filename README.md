@@ -431,7 +431,20 @@ Obrigado por contribuir! Siga as orientações abaixo para manter a qualidade do
 
 Seed adicional para dados de Financeiro/Pedidos (paginados):
 
-- `npm -w @edu/backend run seed:finance` — cria ~60 pedidos pagos (metade assinaturas, metade cursos) para testar filtros, paginação e exportações do Financeiro e Pedidos.
+- `npm run seed:finance` (atalho na raiz) — ou `npm -w @edu/backend run seed:finance` — cria ~60 pedidos pagos (metade assinaturas, metade cursos) para testar filtros, paginação e exportações do Financeiro e Pedidos.
+
+Validação rápida (API):
+- Login Admin → token:
+  - `curl -s -X POST http://localhost:3000/auth/login -H 'Content-Type: application/json' -d '{"email":"admin@local","password":"senha"}' | jq -r .token`
+  - `export TOKEN="<cole_o_token>"; export AUTH="Authorization: Bearer $TOKEN"`
+- Ledger (Financeiro):
+  - `curl -s http://localhost:3000/seed-school/billing/ledger -H "$AUTH" | jq '.meta, .totals'`
+- Pedidos:
+  - `curl -s http://localhost:3000/seed-school/orders -H "$AUTH" | jq '.meta, .items[0]'`
+
+Validação rápida (UI):
+- Acesse `http://localhost:5173` → faça login como Admin
+- Abra páginas “Financeiro” e “Pedidos”; teste filtros, paginação e exportações (CSV/Excel/PDF).
 
 ### Variáveis de ambiente (backend)
 
