@@ -117,6 +117,22 @@ Credenciais de acesso pós-seed:
 - Professor: `professor@local` / `secret`
 - Aluno: `aluno@local` / `secret`
 
+### 🔄 Rebuild Completo (Docker Compose)
+- Use quando trocar versões de dependências (ex.: Prisma) ou ao ajustar variáveis de ambiente.
+- Comando único: `npm run rebuild:all`
+- O que faz:
+  - Derruba a stack (`docker compose down`)
+  - Rebuilda `backend` e `web` sem cache
+  - Sobe `db`, `backend` e `web`
+  - Aguarda health do backend e roda `prisma migrate deploy` + `prisma db seed` (idempotente)
+
+Se a UI mostrar “Failed to fetch”:
+- Verifique se a API está saudável: `curl http://localhost:3000/health`
+- Garanta que a UI aponta para a API correta (arquivo `apps/web/.env.local`):
+  - `VITE_API_URL=http://localhost:3000`
+- CORS no backend (arquivo `apps/backend/.env`):
+  - Em dev, pode usar: `CORS_ORIGIN=*` (ou restrinja para `http://localhost:5173,http://127.0.0.1:5173`)
+
 ## 🛠️ Inicialização Local (Sem Docker)
 - Backend:
   - `cp apps/backend/.env.example apps/backend/.env`

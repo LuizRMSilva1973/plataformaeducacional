@@ -22,6 +22,7 @@
     "db:deploy": "npm -w @edu/backend run prisma:deploy",
     "db:seed": "npm -w @edu/backend run prisma:seed",
     "db:reset": "bash scripts/db-reset.sh",
+    "rebuild:all": "bash scripts/rebuild-all.sh",
     "dev:compose": "docker compose up -d",
     "dev:compose:down": "docker compose down",
     "test:backend:docker": "docker compose exec -T backend npm -w @edu/backend run -s prisma:generate && docker compose exec -T backend npm -w @edu/backend run -s test",
